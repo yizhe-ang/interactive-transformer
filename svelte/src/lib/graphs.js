@@ -7,13 +7,13 @@ import dagre from 'dagre';
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-const nodeWidth = 172;
-const nodeHeight = 36;
-
-const xUnit = 100
-const yUnit = 100
+const xUnit = 200;
+const yUnit = 100;
 
 const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+	const nodeWidth = 172;
+	const nodeHeight = 36;
+
 	const isHorizontal = direction === 'LR';
 	dagreGraph.setGraph({ rankdir: direction });
 
@@ -92,17 +92,11 @@ const embeddingEdges = [
 ];
 
 // Residual stream
-// const residualStreamNodes = [
-// 	{
-// 		id: 'residualPre',
-// 		data: { label: 'residualPre', shape: ['seq', 'd_model'] }
-// 	}
-// ];
 
 const residualPreNode = {
 	id: 'residualPre',
 	data: { label: 'residual pre', shape: ['seq', 'd_model'] },
-  position: { x: 0, y: 0 }
+	position: { x: 0, y: 0 }
 };
 
 // Attention head
@@ -112,114 +106,134 @@ function genAttentionHeadGraph(inputNode, id) {
 		id: `attentionHead_${id}`,
 		type: 'group',
 		data: { label: `attention head` },
-		style: {
-			width: 1000,
-			height: 1000
-		}
+		position: { x: inputNode.position.x + xUnit * 0.5, y: inputNode.position.y + yUnit * 1 },
+		style: `width: ${xUnit * 3.5}px; height: ${yUnit * 9.5}px;`
 	};
 
 	const defaultNodeOptions = {
-		// parentNode: groupNode.id,
-		// extent: 'parent'
+		parentNode: groupNode.id,
+		extent: 'parent',
+    type: "node"
 	};
 
-	const nodes = {
-		// groupNode,
-		wvNode: {
-			...defaultNodeOptions,
-			id: `W_V_${id}`,
-			data: { label: 'W_V', shape: ['d_model', 'd_head'], type: 'parameters' },
-      position: { x: xUnit * 1, y: yUnit * 1 }
-		},
-		wqNode: {
-			...defaultNodeOptions,
-			id: `W_Q_${id}`,
-			data: { label: 'W_Q', shape: ['d_model', 'd_head'], type: 'parameters' },
-      position: { x: xUnit * 2, y: yUnit * 1 }
-		},
-		wkNode: {
-			...defaultNodeOptions,
-			id: `W_K_${id}`,
-			data: { label: 'W_K', shape: ['d_model', 'd_head'], type: 'parameters' },
-      position: { x: xUnit * 3, y: yUnit * 1 }
-		},
-		vNode: {
-			...defaultNodeOptions,
-			id: `v_${id}`,
-			data: { label: 'v', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
-      position: { x: xUnit * 3, y: yUnit * 2 }
-		},
-		qNode: {
-			...defaultNodeOptions,
-			id: `q_${id}`,
-			data: { label: 'q', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
-      position: { x: xUnit * 2, y: yUnit * 2 }
-		},
-		kNode: {
-			...defaultNodeOptions,
-			id: `k_${id}`,
-			data: { label: 'k', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
-      position: { x: xUnit * 3, y: yUnit * 2 }
-		},
-		qKNode: {
-			...defaultNodeOptions,
-			id: `q~k_${id}`,
-			data: { label: 'q~k', type: 'operation' }
-		},
-		attentionScoresNode: {
-			...defaultNodeOptions,
-			id: `attentionScores_${id}`,
-			data: { label: 'attention scores', shape: ['n_head', 'seq_Q', 'seq_K'], type: 'activations' }
-		},
-		attentionPatternNode: {
-			...defaultNodeOptions,
-			id: `attentionPattern_${id}`,
-			data: { label: 'attention pattern', shape: ['n_head', 'seq_Q', 'seq_K'], type: 'activations' }
-		},
-		vAttentionPatternNode: {
-			...defaultNodeOptions,
-			id: `v~attentionPattern_${id}`,
-			data: { label: 'v~attention pattern', type: 'operation' }
-		},
-		zNode: {
-			...defaultNodeOptions,
-			id: `z_${id}`,
-			data: { label: 'z', shape: ['seq', 'n_head', 'd_head'], type: 'activations' }
-		},
-		woNode: {
-			...defaultNodeOptions,
-			id: `W_O_${id}`,
-			data: { label: 'W_O', shape: ['d_head', 'd_model'], type: 'parameters' }
-		},
-		resultNode: {
-			...defaultNodeOptions,
-			id: `result_${id}`,
-			data: { label: 'result', shape: ['seq', 'n_head', 'd_model'], type: 'activations' }
-		}
+	const wvNode = {
+		...defaultNodeOptions,
+		id: `W_V_${id}`,
+		data: { label: 'W_V', shape: ['d_model', 'd_head'], type: 'parameters' },
+		position: { x: xUnit * 0.4, y: yUnit * 0.5 }
+	};
+	const wqNode = {
+		...defaultNodeOptions,
+		id: `W_Q_${id}`,
+		data: { label: 'W_Q', shape: ['d_model', 'd_head'], type: 'parameters' },
+		position: { x: wvNode.position.x + xUnit, y: wvNode.position.y }
+	};
+	const wkNode = {
+		...defaultNodeOptions,
+		id: `W_K_${id}`,
+		data: { label: 'W_K', shape: ['d_model', 'd_head'], type: 'parameters' },
+		position: { x: wqNode.position.x + xUnit, y: wvNode.position.y }
+	};
+	const vNode = {
+		...defaultNodeOptions,
+		id: `v_${id}`,
+		data: { label: 'v', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
+		position: { x: wvNode.position.x, y: wvNode.position.y + yUnit }
+	};
+	const qNode = {
+		...defaultNodeOptions,
+		id: `q_${id}`,
+		data: { label: 'q', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
+		position: { x: wqNode.position.x, y: wqNode.position.y + yUnit }
+	};
+	const kNode = {
+		...defaultNodeOptions,
+		id: `k_${id}`,
+		data: { label: 'k', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
+		position: { x: wkNode.position.x, y: wkNode.position.y + yUnit }
+	};
+	const qKNode = {
+		...defaultNodeOptions,
+		id: `q~k_${id}`,
+		data: { label: 'q~k', type: 'operation' },
+		position: { x: (qNode.position.x + kNode.position.x) / 2, y: qNode.position.y + yUnit }
+	};
+	const attentionScoresNode = {
+		...defaultNodeOptions,
+		id: `attentionScores_${id}`,
+		data: { label: 'attention scores', shape: ['n_head', 'seq_Q', 'seq_K'], type: 'activations' },
+		position: { x: qKNode.position.x, y: qKNode.position.y + yUnit }
+	};
+	const attentionPatternNode = {
+		...defaultNodeOptions,
+		id: `attentionPattern_${id}`,
+		data: { label: 'attention pattern', shape: ['n_head', 'seq_Q', 'seq_K'], type: 'activations' },
+		position: { x: attentionScoresNode.position.x, y: attentionScoresNode.position.y + yUnit }
+	};
+	const vAttentionPatternNode = {
+		...defaultNodeOptions,
+		id: `v~attentionPattern_${id}`,
+		data: { label: 'v~attention pattern', type: 'operation' },
+		position: { x: wqNode.position.x, y: attentionPatternNode.position.y + yUnit }
+	};
+	const zNode = {
+		...defaultNodeOptions,
+		id: `z_${id}`,
+		data: { label: 'z', shape: ['seq', 'n_head', 'd_head'], type: 'activations' },
+		position: { x: vAttentionPatternNode.position.x, y: vAttentionPatternNode.position.y + yUnit }
+	};
+	const woNode = {
+		...defaultNodeOptions,
+		id: `W_O_${id}`,
+		data: { label: 'W_O', shape: ['d_head', 'd_model'], type: 'parameters' },
+		position: { x: zNode.position.x, y: zNode.position.y + yUnit }
+	};
+	const resultNode = {
+		...defaultNodeOptions,
+		id: `result_${id}`,
+		data: { label: 'result', shape: ['seq', 'n_head', 'd_model'], type: 'activations' },
+		position: { x: woNode.position.x, y: woNode.position.y + yUnit }
 	};
 
 	const edges = [
-		genEdge(inputNode, nodes.wvNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(inputNode, nodes.wqNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(inputNode, nodes.wkNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(nodes.wvNode, nodes.vNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.wqNode, nodes.qNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.wkNode, nodes.kNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.qNode, nodes.qKNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.kNode, nodes.qKNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.qKNode, nodes.attentionScoresNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.attentionScoresNode, nodes.attentionPatternNode, {
+		genEdge(inputNode, wvNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(inputNode, wqNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(inputNode, wkNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(wvNode, vNode, { ...defaultEdgeOptions }),
+		genEdge(wqNode, qNode, { ...defaultEdgeOptions }),
+		genEdge(wkNode, kNode, { ...defaultEdgeOptions }),
+		genEdge(qNode, qKNode, { ...defaultEdgeOptions }),
+		genEdge(kNode, qKNode, { ...defaultEdgeOptions }),
+		genEdge(qKNode, attentionScoresNode, { ...defaultEdgeOptions }),
+		genEdge(attentionScoresNode, attentionPatternNode, {
 			...defaultEdgeOptions,
 			label: 'softmax'
 		}),
-		genEdge(nodes.vNode, nodes.vAttentionPatternNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.attentionPatternNode, nodes.vAttentionPatternNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.vAttentionPatternNode, nodes.zNode, { ...defaultEdgeOptions }),
-		genEdge(nodes.zNode, nodes.woNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(nodes.woNode, nodes.resultNode, { ...defaultEdgeOptions })
+		genEdge(vNode, vAttentionPatternNode, { ...defaultEdgeOptions }),
+		genEdge(attentionPatternNode, vAttentionPatternNode, { ...defaultEdgeOptions }),
+		genEdge(vAttentionPatternNode, zNode, { ...defaultEdgeOptions }),
+		genEdge(zNode, woNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(woNode, resultNode, { ...defaultEdgeOptions })
 	];
 
-	return { nodes: Object.values(nodes), edges };
+	const nodes = [
+		groupNode,
+		wvNode,
+		wqNode,
+		wkNode,
+		vNode,
+		qNode,
+		kNode,
+		qKNode,
+		attentionScoresNode,
+		attentionPatternNode,
+		vAttentionPatternNode,
+		zNode,
+		woNode,
+		resultNode
+	];
+
+	return { nodes, edges };
 }
 
 const { nodes: attentionHeadNodes, edges: attentionHeadEdges } = genAttentionHeadGraph(
@@ -227,13 +241,13 @@ const { nodes: attentionHeadNodes, edges: attentionHeadEdges } = genAttentionHea
 	1
 );
 
-const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-	[residualPreNode, ...attentionHeadNodes],
-	[...attentionHeadEdges]
-);
+// const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+// 	[residualPreNode, ...attentionHeadNodes],
+// 	[...attentionHeadEdges]
+// );
 
-// const layoutedNodes = [residualPreNode, ...attentionHeadNodes]
-// const layoutedEdges = [...attentionHeadEdges]
+const layoutedNodes = [residualPreNode, ...attentionHeadNodes];
+const layoutedEdges = [...attentionHeadEdges];
 
 export const nodes = writable(layoutedNodes);
 export const edges = writable(layoutedEdges);
