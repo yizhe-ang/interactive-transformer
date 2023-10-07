@@ -27,12 +27,17 @@
 	"type": "module",
 	"dependencies": {
 		"@fontsource-variable/roboto-flex": "^5.0.8",
+		"@threlte/core": "^6.0.10",
+		"@threlte/extras": "^7.0.0",
 		"@xyflow/svelte": "^0.0.22",
+		"bits-ui": "^0.5.7",
 		"clsx": "^2.0.0",
+		"d3": "^7.8.5",
 		"dagre": "^0.8.5",
 		"lucide-svelte": "^0.282.0",
 		"tailwind-merge": "^1.14.0",
 		"tailwind-variants": "^0.1.14",
+		"three": "^0.157.0",
 		"webcola": "^3.4.0"
 	}
 }

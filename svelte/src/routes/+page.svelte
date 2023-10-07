@@ -1,5 +1,6 @@
 <script>
 	import Flow from '$lib/components/Flow.svelte';
+	import { SvelteFlowProvider } from '@xyflow/svelte';
 
 	// async function test() {
 	// 	const response = await fetch('http://localhost:8000/inference');
@@ -12,5 +13,8 @@
 </script>
 
 <div class="fixed inset-0">
-	<Flow />
+	<SvelteFlowProvider>
+		<Flow />
+	</SvelteFlowProvider>
 </div>
+
