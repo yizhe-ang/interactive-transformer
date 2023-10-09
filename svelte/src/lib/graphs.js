@@ -44,12 +44,6 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 	return { nodes, edges };
 };
 
-const defaultNodeOptions = {
-	// targetPosition: 'bottom',
-	// sourcePosition: 'top',
-	// position: { x: 0, y: 0 }
-};
-
 const defaultEdgeOptions = {
 	markerEnd: {
 		type: 'arrowclosed'
@@ -65,43 +59,39 @@ function genEdge(sourceNode, targetNode, options) {
 	};
 }
 
-// Embedding
-const embeddingNodes = [
-	{
-		...defaultNodeOptions,
-		id: 'tokens',
-		type: 'input',
-		data: { label: 'tokens' }
-	},
-	{
-		...defaultNodeOptions,
-		id: 'embedding',
-		data: { label: 'embedding' }
-	}
-];
-
-const embeddingEdges = [
-	{
-		...defaultEdgeOptions,
-		id: 'tokens-embedding',
-		source: 'tokens',
-		target: 'embedding',
-		label: 'lookup'
-	}
-];
-
-const residualPreNode = {
-	id: 'residualPre',
+const defaultNodeOptions = {
 	type: 'node',
-	data: { label: 'residual pre', shape: ['seq', 'd_model'] },
 	position: { x: 0, y: 0 }
 };
 
+const inputNode = {
+	...defaultNodeOptions,
+	id: 'input',
+	data: { label: 'input text' }
+};
+
+const embeddingNode = {
+	...defaultNodeOptions,
+	id: 'embedding',
+	data: { label: 'embedding', shape: ['seq', 'd_model'], type: 'activations' }
+};
+
+const inputNodes = [inputNode, embeddingNode]
+
+const inputEdges = [
+  genEdge(inputNode, embeddingNode, { ...defaultEdgeOptions })
+]
+
+const residualPreNode = {
+	...defaultNodeOptions,
+	id: 'residualPre',
+	data: { label: 'residual pre', shape: ['seq', 'd_model'], type: 'activations' }
+};
+
 const residualPostNode = {
+	...defaultNodeOptions,
 	id: 'residualPost',
-	type: 'node',
-	data: { label: 'residual post', shape: ['seq', 'd_model'] },
-	position: { x: 0, y: 0 }
+	data: { label: 'residual post', shape: ['seq', 'd_model'], type: 'activations' }
 };
 
 // Attention head
@@ -239,7 +229,7 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 		genEdge(woNode, resultNode, { ...defaultEdgeOptions }),
 		// genEdge(resultNode, sumHeadsNode, { ...defaultEdgeOptions })
 		genEdge(resultNode, attentionOutNode, { ...defaultEdgeOptions }),
-		genEdge(residualPreNode, residualPreAddAttentionOutNode, { ...defaultEdgeOptions }),
+		genEdge(inputNode, residualPreAddAttentionOutNode, { ...defaultEdgeOptions }),
 		genEdge(attentionOutNode, residualPreAddAttentionOutNode, { ...defaultEdgeOptions }),
 		genEdge(residualPreAddAttentionOutNode, outputNode, { ...defaultEdgeOptions })
 	];
@@ -323,7 +313,7 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 				{ node: zNode.id, offset: 0 },
 				{ node: woNode.id, offset: 0 },
 				{ node: resultNode.id, offset: 0 },
-				{ node: attentionOutNode.id, offset: 0 },
+				{ node: attentionOutNode.id, offset: 0 }
 			]
 		},
 		{
@@ -362,7 +352,7 @@ const {
 	nodes: attentionHeadNodes,
 	edges: attentionHeadEdges,
 	constraints: attentionConstraints
-} = genAttentionHeadGraph(1, residualPreNode, residualPostNode);
+} = genAttentionHeadGraph(1, embeddingNode, residualPostNode);
 
 // const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
 // 	[residualPreNode, ...attentionHeadNodes],
@@ -374,7 +364,17 @@ const {
 // );
 
 export const transformerGraph = {
-	nodes: [residualPreNode, residualPostNode, ...attentionHeadNodes],
-	edges: [...attentionHeadEdges],
-	constraints: [...attentionConstraints]
+	nodes: [...inputNodes, residualPostNode, ...attentionHeadNodes],
+	edges: [...inputEdges, ...attentionHeadEdges],
+	constraints: [
+		{
+			type: 'alignment',
+			axis: 'x',
+			offsets: [
+				{ node: inputNode.id, offset: 0 },
+				{ node: embeddingNode.id, offset: 0 }
+			]
+		},
+    ...attentionConstraints
+  ]
 };

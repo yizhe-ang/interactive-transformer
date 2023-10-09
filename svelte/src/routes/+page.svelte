@@ -1,6 +1,9 @@
 <script>
-	import Flow from '$lib/components/Flow.svelte';
+	import FlowView from '$components/flow-view.svelte';
+	import DataView from '$components/data-view.svelte';
+	import TextInput from '$components/text-input.svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
+	import { Pane, Splitpanes } from 'svelte-splitpanes';
 
 	// async function test() {
 	// 	const response = await fetch('http://localhost:8000/inference');
@@ -10,11 +13,24 @@
 	// }
 
 	// const promise = test();
+
+	let isSplitpanesReady = false;
 </script>
 
-<div class="fixed inset-0">
-	<SvelteFlowProvider>
-		<Flow />
-	</SvelteFlowProvider>
-</div>
+<Splitpanes on:ready={() => (isSplitpanesReady = true)} class="fixed inset-0">
+	<Pane>
+		{#if isSplitpanesReady}
+			<SvelteFlowProvider>
+				<FlowView />
+			</SvelteFlowProvider>
+		{/if}
+	</Pane>
 
+	<Pane size={0}>
+		<DataView />
+	</Pane>
+</Splitpanes>
+
+<div class="fixed">
+	<TextInput />
+</div>

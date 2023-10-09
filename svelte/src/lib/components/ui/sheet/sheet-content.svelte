@@ -27,7 +27,7 @@
 </script>
 
 <SheetPortal>
-	<SheetOverlay />
+	<!-- <SheetOverlay /> -->
 	<SheetPrimitive.Content
 		{inTransition}
 		{inTransitionConfig}

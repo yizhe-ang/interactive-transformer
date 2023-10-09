@@ -12,6 +12,7 @@ const config = {
 				'2xl': '1400px'
 			}
 		},
+		plugins: [require('@tailwindcss/typography')],
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
