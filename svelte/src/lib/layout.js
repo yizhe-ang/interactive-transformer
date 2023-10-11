@@ -29,7 +29,6 @@ export function colaLayout(graph) {
 
     return output
 	});
-	console.log(constraints);
 
 	const edges = graph.edges.map((d) =>
 		Object.assign(Object.create(d), {

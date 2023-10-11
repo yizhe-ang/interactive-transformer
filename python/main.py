@@ -2,6 +2,7 @@ from typing import Union
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from transformer_lens import HookedTransformer
 
 
@@ -18,18 +19,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Init TransformerLens
-model: HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
+
+class TextInput(BaseModel):
+    text: str
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+@app.on_event("startup")
+def startup_event():
+    # Init TransformerLens
+    model: HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
+
+    app.package = {"model": model}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.post("/input_text")
+def input_text(payload: TextInput):
+    model = app.package["model"]
+
+    text = payload.text
+
+    str_tokens = model.to_str_tokens(text)
+    tokens = model.to_tokens(text)
+    logits, cache = model.run_with_cache(tokens, remove_batch_dim=True)
+
+    app.package["cache"] = cache
+
+    print(str_tokens)
+
+    return str_tokens
 
 
 @app.get("/inference")
@@ -43,3 +60,16 @@ For this demo notebook we'll look at GPT-2 Small, an 80M parameter model. To try
     loss = model(model_description_text, return_type="loss").item()
 
     return {"loss": loss}
+
+
+@app.get("/attention_maps/{layer}")
+def read_attention_maps(layer: int):
+    # [n_heads, n_tokens, n_tokens]
+    attention_maps = (
+        app.package["cache"]["pattern", layer].cpu().numpy().tolist()
+    )
+
+    # FIXME: Any processing required? Rounding etc.
+
+    # return {"value": attention_maps}
+    return attention_maps

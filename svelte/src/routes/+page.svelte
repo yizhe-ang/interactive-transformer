@@ -26,11 +26,12 @@
 		{/if}
 	</Pane>
 
-	<Pane size={0}>
+	<!-- <Pane size={0}> -->
+	<Pane size={50}>
 		<DataView />
 	</Pane>
 </Splitpanes>
 
-<div class="fixed">
+<div class="fixed left-0 right-0 grid place-content-center">
 	<TextInput />
 </div>

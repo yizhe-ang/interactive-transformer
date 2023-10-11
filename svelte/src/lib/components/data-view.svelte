@@ -15,6 +15,8 @@
 	</Sheet.Content>
 </Sheet.Root> -->
 
-<Canvas>
-	<AttentionMaps />
-</Canvas>
+<div class="w-[100%] h-[100%] bg-background">
+	<Canvas>
+		<AttentionMaps />
+	</Canvas>
+</div>
