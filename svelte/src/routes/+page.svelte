@@ -32,6 +32,6 @@
 	</Pane>
 </Splitpanes>
 
-<div class="fixed left-0 right-0 grid place-content-center">
+<div class="fixed left-0 right-0 grid place-content-center pointer-events-none">
 	<TextInput />
 </div>

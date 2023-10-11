@@ -6,35 +6,46 @@
 	import { spring } from 'svelte/motion';
 	import { Color, MeshBasicMaterial, PlaneGeometry } from 'three';
 	import { selectedAttentionMapI } from '$lib/stores.js';
+	import { attentionColorScale } from '$lib/constants.js';
 
 	export let data;
 	export let i = 0;
 
-	const xScale = scaleBand(range(data.length), [-0.5, 0.5]);
-	const yScale = scaleBand(range(data.length), [0.5, -0.5]);
-	const positions = new Float32Array(data.length * data.length * 3);
-	for (let i = 0; i < data.length; i++) {
-		for (let j = 0; j < data.length; j++) {
-			const k = i * data.length + j;
+	// FIXME: Make this reactive to data
 
-			positions[k * 3 + 0] = xScale(i);
-			positions[k * 3 + 1] = yScale(j);
-			positions[k * 3 + 2] = 0;
+	const colorScale = attentionColorScale;
+
+	let xScale;
+	let yScale;
+	let positions;
+	let colors;
+
+	$: onDataUpdate(data);
+	function onDataUpdate(data) {
+		xScale = scaleBand(range(data.length), [-0.5, 0.5]);
+		yScale = scaleBand(range(data.length), [0.5, -0.5]);
+		positions = new Float32Array(data.length * data.length * 3);
+		for (let i = 0; i < data.length; i++) {
+			for (let j = 0; j < data.length; j++) {
+				const k = i * data.length + j;
+
+				positions[k * 3 + 0] = xScale(i);
+				positions[k * 3 + 1] = yScale(j);
+				positions[k * 3 + 2] = 0;
+			}
 		}
-	}
 
-	// const colorScale = scaleSequential(t => interpolateCividis(1 - t));
-	const colorScale = scaleSequential(interpolatePuBuGn);
-	const colors = new Float32Array(data.length * data.length * 3);
-	for (let i = 0; i < data.length; i++) {
-		for (let j = 0; j < data.length; j++) {
-			const k = i * data.length + j;
+		colors = new Float32Array(data.length * data.length * 3);
+		for (let i = 0; i < data.length; i++) {
+			for (let j = 0; j < data.length; j++) {
+				const k = i * data.length + j;
 
-			const color = new Color(colorScale(data[j][i]));
+				const color = new Color(colorScale(data[j][i]));
 
-			colors[k * 3 + 0] = color.r;
-			colors[k * 3 + 1] = color.g;
-			colors[k * 3 + 2] = color.b;
+				colors[k * 3 + 0] = color.r;
+				colors[k * 3 + 1] = color.g;
+				colors[k * 3 + 2] = color.b;
+			}
 		}
 	}
 
@@ -68,9 +79,9 @@
 	// Transitions
 	const { onPointerEnter, onPointerLeave, hovering } = useCursor();
 	const scale = spring(0.9);
-	// $: scale.set($hovering ? 1 : 0.9);
 
-	const animDelay = i * 70;
+	$: animDelay = i * 70;
+
 	const scaleTransition = createTransition((ref, { direction }) => {
 		return {
 			tick(t) {
@@ -100,6 +111,7 @@
 <T.Group in={scaleTransition} out={scaleTransition}>
 	<T.Points scale={[$scale, $scale, 1]}>
 		<T.BufferGeometry>
+      <!-- FIXME: Set this manually? -->
 			<T.BufferAttribute
 				attach="attributes.position"
 				count={data.length * data.length}

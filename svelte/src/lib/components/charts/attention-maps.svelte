@@ -43,7 +43,10 @@
 		{#each $attentionMaps as data, i}
 			<T.Group>
 				<Box width={1} height={1}>
-					<AttentionMap {data} {i} />
+          <!-- HACK: -->
+					{#key data}
+						<AttentionMap {data} {i} />
+					{/key}
 				</Box>
 			</T.Group>
 		{/each}

@@ -1,7 +1,7 @@
 import { asyncDerived, writable, derived } from '@square/svelte-store';
 
 export const inputText = writable(
-	'<mark style="background-color: black;">Natural</mark> language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.'
+	`Natural language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.`
 );
 
 export const selectedLayer = writable(0);
