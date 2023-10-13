@@ -1,17 +1,25 @@
 <script>
-	import { T } from '@threlte/core';
-	import { createTransition, useCursor } from '@threlte/extras';
+	import { T, useThrelte } from '@threlte/core';
+	import { Text, createTransition, useCursor } from '@threlte/extras';
 	import { scaleBand, scaleSequential, range, interpolateCividis, interpolatePuBuGn } from 'd3';
 	import { cubicIn, cubicOut } from 'svelte/easing';
 	import { spring } from 'svelte/motion';
 	import { Color, MeshBasicMaterial, PlaneGeometry } from 'three';
 	import { selectedAttentionMapI } from '$lib/stores.js';
 	import { attentionColorScale } from '$lib/constants.js';
+	import { getContext } from 'svelte';
+
+	// FIXME: Interaction handling is messy
+	// Is there a ui component for this?
+
+	const { size } = useThrelte();
 
 	export let data;
 	export let i = 0;
 
-	// FIXME: Make this reactive to data
+	const clickedI = getContext('clickedI');
+
+	$: clicked = $clickedI == i;
 
 	const colorScale = attentionColorScale;
 
@@ -45,11 +53,20 @@
 				colors[k * 3 + 0] = color.r;
 				colors[k * 3 + 1] = color.g;
 				colors[k * 3 + 2] = color.b;
+
+				// HACK: Make it lower triangular
+				if (i > j) {
+					colors[k * 3 + 0] = 1;
+					colors[k * 3 + 1] = 1;
+					colors[k * 3 + 2] = 1;
+				}
 			}
 		}
 	}
 
 	const vertexShader = /* glsl */ `
+    uniform float viewportHeight;
+    uniform float pointSize;
     attribute vec3 color;
     varying vec3 vColor;
 
@@ -62,8 +79,7 @@
 
       gl_Position = projectedPosition;
 
-      float size = 120.0;
-      gl_PointSize = size * (1.0 / - viewPosition.z);
+      gl_PointSize = viewportHeight * pointSize * 2.0 * (1.0 / - viewPosition.z);
     }
   `;
 
@@ -93,38 +109,89 @@
 		};
 	});
 
-	$: onHover($hovering);
-	function onHover(hovering) {
-		scale.set(hovering ? 1 : 0.9);
+	// $: onHover($hovering);
+	// function onHover(hovering) {
+	// 	if ($clickedI != i) {
+	// 		scale.set(hovering ? 1 : 0.9);
+	// 	}
 
-		if (hovering) {
-			$selectedAttentionMapI = i;
+	// 	if (hovering) {
+	// 		if ($clickedI == null) $selectedAttentionMapI = i;
+	// 	}
+	// }
+
+	$: updateScale($hovering, clicked);
+	function updateScale() {
+		if (clicked) {
+			$scale = 1;
+		} else if (!clicked) {
+			if ($hovering) {
+				$scale = 1;
+			} else {
+				$scale = 0.9;
+			}
 		}
+	}
+
+	$: if ($clickedI == null) {
+		if ($hovering) $selectedAttentionMapI = i;
 	}
 </script>
 
 <!-- HACK: -->
-<T.Mesh on:pointerenter={onPointerEnter} on:pointerleave={onPointerLeave}>
-	<T.PlaneGeometry args={[1, 1]} />
-	<T.MeshBasicMaterial transparent opacity={0} />
-</T.Mesh>
-<T.Group in={scaleTransition} out={scaleTransition}>
+<T.Group in={scaleTransition} out={scaleTransition} position.z={5}>
+	<!-- FIXME: Just use a plane? -->
 	<T.Points scale={[$scale, $scale, 1]}>
 		<T.BufferGeometry>
-      <!-- FIXME: Set this manually? -->
-			<T.BufferAttribute
-				attach="attributes.position"
-				count={data.length * data.length}
-				array={positions}
-				itemSize={3}
-			/>
-			<T.BufferAttribute
-				attach="attributes.color"
-				count={data.length * data.length}
-				array={colors}
-				itemSize={3}
-			/>
+			<!-- FIXME: Set this manually? -->
+			<!-- Re-render whenever data changes -->
+			{#key data}
+				<T.BufferAttribute
+					attach="attributes.position"
+					count={data.length * data.length}
+					array={positions}
+					itemSize={3}
+				/>
+				<T.BufferAttribute
+					attach="attributes.color"
+					count={data.length * data.length}
+					array={colors}
+					itemSize={3}
+				/>
+			{/key}
 		</T.BufferGeometry>
-		<T.ShaderMaterial {vertexShader} {fragmentShader} />
+		{#key xScale}
+			<T.ShaderMaterial
+				{vertexShader}
+				{fragmentShader}
+				uniforms={{
+					viewportHeight: {
+						value: $size.height
+					},
+					pointSize: {
+						value: xScale.bandwidth()
+					}
+				}}
+			/>
+		{/key}
 	</T.Points>
+	<Text
+		text={i}
+		fontSize={0.3}
+		position={[0.1, 0.2, 0]}
+		fillOpacity={clicked ? 0.9 : 0.5}
+		color={clicked ? 'black' : null}
+	/>
+
+	<T.Mesh
+		on:pointerenter={onPointerEnter}
+		on:pointerleave={onPointerLeave}
+		on:click={() => {
+			$clickedI = $clickedI == i ? null : i;
+			$selectedAttentionMapI = selectedAttentionMapI == i ? null : i;
+		}}
+	>
+		<T.PlaneGeometry args={[1, 1]} />
+		<T.MeshBasicMaterial transparent opacity={0} />
+	</T.Mesh>
 </T.Group>

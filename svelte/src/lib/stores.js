@@ -1,12 +1,26 @@
-import { asyncDerived, writable, derived } from '@square/svelte-store';
+import { asyncDerived, asyncReadable, writable, derived } from '@square/svelte-store';
 
+// export const inputText = writable(
+// 	`Natural language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.`
+// );
+// export const inputText = writable(
+// 	"We think that powerful, significantly superhuman machine intelligence is more likely than not to be created this century. If current machine learning techniques were scaled up to this level, we think they would by default produce systems that are deceptive or manipulative, and that no solid plans are known for how to avoid this."
+// );
 export const inputText = writable(
-	`Natural language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.`
+	'rias [( Cyt decreasingINC neat post 99cancerchurch hat patientrel Downtown associMarkerincoln cyl Addingometric confusing Moment val dirtyigrant WasITCHopeerver queriesaccount sinister files courtesyulasprot rockybounds aspect indoors turkeyigion :filed preparedumbentailsoste competenceitatingrias [( Cyt decreasingINC neat post 99cancerchurch hat patientrel Downtown associMarkerincoln cyl Addingometric confusing Moment val dirtyigrant WasITCHopeerver queriesaccount sinister files courtesyulasprot rockybounds aspect indoors turkeyigion :filed preparedumbentailsoste competenceitating'
 );
 
 export const selectedLayer = writable(0);
 
 export const selectedAttentionMapI = writable(0);
+
+export const selectedTokenI = writable(0);
+
+export const numLayers = asyncReadable(undefined, async () => {
+	const response = await fetch(`http://localhost:8000/num_layers`);
+
+	return await response.json();
+});
 
 export const tokens = asyncDerived(inputText, async ($inputText) => {
 	const response = await fetch(`http://localhost:8000/input_text`, {
@@ -30,5 +44,12 @@ export const selectedAttentionMap = derived(
 	[attentionMaps, selectedAttentionMapI],
 	([$attentionMaps, $selectedAttentionMapI]) => {
 		return $attentionMaps?.[$selectedAttentionMapI];
+	}
+);
+
+export const selectedAttentionRow = derived(
+	[selectedAttentionMap, selectedTokenI],
+	([$selectedAttentionMap, $selectedTokenI]) => {
+		return $selectedAttentionMap?.[$selectedTokenI];
 	}
 );

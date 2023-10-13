@@ -47,7 +47,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 const defaultEdgeOptions = {
 	markerEnd: {
 		type: 'arrowclosed'
-	}
+	},
+  zIndex: 1
 };
 
 function genEdge(sourceNode, targetNode, options) {
@@ -76,11 +77,9 @@ const embeddingNode = {
 	data: { label: 'embedding', shape: ['seq', 'd_model'], type: 'activations' }
 };
 
-const inputNodes = [inputNode, embeddingNode]
+const inputNodes = [inputNode, embeddingNode];
 
-const inputEdges = [
-  genEdge(inputNode, embeddingNode, { ...defaultEdgeOptions })
-]
+const inputEdges = [genEdge(inputNode, embeddingNode, { ...defaultEdgeOptions })];
 
 const residualPreNode = {
 	...defaultNodeOptions,
@@ -97,21 +96,21 @@ const residualPostNode = {
 // Attention head
 
 function genAttentionHeadGraph(id, inputNode, outputNode) {
-	const groupNode = {
-		id: `attentionHead_${id}`,
-		// type: 'group',
-		type: 'node',
-		data: { label: `attention head` },
-		position: { x: inputNode.position.x + xUnit * 0.5, y: inputNode.position.y + yUnit * 1 },
-		style: `width: ${xUnit * 3.5}px; height: ${yUnit * 9.5}px;`
-	};
-
 	const defaultNodeOptions = {
 		// parentNode: groupNode.id,
 		// extent: 'parent',
 		type: 'node',
-		// class: "nodrag"
+		class: 'nodrag',
 		position: { x: 0, y: 0 }
+	};
+
+	const groupNode = {
+		...defaultNodeOptions,
+		id: `attentionHead_${id}`,
+		// type: 'group',
+		data: { label: `attention head` }
+		// position: { x: inputNode.position.x + xUnit * 0.5, y: inputNode.position.y + yUnit * 1 },
+		// style: `width: ${xUnit * 3.5}px; height: ${yUnit * 9.5}px;`
 	};
 
 	const wvNode = {
@@ -253,6 +252,28 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 		residualPreAddAttentionOutNode
 	];
 
+	const groups = [
+		{
+			leaves: [
+				wvNode.id,
+				wqNode.id,
+				wkNode.id,
+				vNode.id,
+				qNode.id,
+				kNode.id,
+				qKNode.id,
+				attentionScoresNode.id,
+				attentionPatternNode.id,
+				vAttentionPatternNode.id,
+				zNode.id,
+				woNode.id,
+				resultNode.id,
+				attentionOutNode.id
+				// residualPreAddAttentionOutNode
+			]
+		}
+	];
+
 	const constraints = [
 		{
 			type: 'alignment',
@@ -342,16 +363,23 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 			left: inputNode.id,
 			right: wvNode.id,
 			gap: 100
-		}
+		},
+		{
+			axis: 'y',
+			left: inputNode.id,
+			right: wqNode.id,
+			gap: 150
+		},
 	];
 
-	return { nodes, edges, constraints };
+	return { nodes, edges, constraints, groups };
 }
 
 const {
 	nodes: attentionHeadNodes,
 	edges: attentionHeadEdges,
-	constraints: attentionConstraints
+	constraints: attentionConstraints,
+	groups: attentionGroups
 } = genAttentionHeadGraph(1, embeddingNode, residualPostNode);
 
 // const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
@@ -366,6 +394,7 @@ const {
 export const transformerGraph = {
 	nodes: [...inputNodes, residualPostNode, ...attentionHeadNodes],
 	edges: [...inputEdges, ...attentionHeadEdges],
+	groups: attentionGroups,
 	constraints: [
 		{
 			type: 'alignment',
@@ -375,6 +404,6 @@ export const transformerGraph = {
 				{ node: embeddingNode.id, offset: 0 }
 			]
 		},
-    ...attentionConstraints
-  ]
+		...attentionConstraints
+	]
 };

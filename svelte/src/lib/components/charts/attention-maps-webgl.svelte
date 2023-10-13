@@ -1,18 +1,24 @@
 <script>
 	import { T, useThrelte } from '@threlte/core';
 	import { OrbitControls, interactivity, transitions } from '@threlte/extras';
-	import AttentionMap from './attention-map.svelte';
+	import AttentionMap from './attention-map-webgl.svelte';
 	import * as THREE from 'three';
 	import { Flex, Box } from '@threlte/flex';
 	import { writable } from 'svelte/store';
 	import { setContext } from 'svelte';
-	import { attentionMaps } from '$lib/stores.js';
+	import { attentionMaps, selectedAttentionMap } from '$lib/stores.js';
 
 	// TODO:
 	// https://threlte.xyz/docs/reference/flex/getting-started
 
+	// TODO: How to have a summary visualization for each layer?
+	// TODO: Have an average attention map for each layer?
+
 	interactivity();
 	transitions();
+
+	const clickedI = writable(null);
+	setContext('clickedI', clickedI);
 
 	const { size, renderer, scene, camera } = useThrelte();
 
@@ -26,7 +32,7 @@
 	const gap = 0.1;
 </script>
 
-<T.PerspectiveCamera makeDefault position={[0, 0, 5]} far={50} near={0.1}>
+<T.PerspectiveCamera makeDefault position={[0, 0, 10]} far={50} near={0.1}>
 	<OrbitControls
 		enableDamping
 		mouseButtons={{
@@ -34,6 +40,7 @@
 			MIDDLE: THREE.MOUSE.DOLLY,
 			LEFT: THREE.MOUSE.PAN
 		}}
+    zoomSpeed={0.3}
 	/>
 </T.PerspectiveCamera>
 
@@ -43,10 +50,10 @@
 		{#each $attentionMaps as data, i}
 			<T.Group>
 				<Box width={1} height={1}>
-          <!-- HACK: -->
-					{#key data}
-						<AttentionMap {data} {i} />
-					{/key}
+					<!-- HACK: -->
+					<!-- {#key data} -->
+					<AttentionMap {data} {i} />
+					<!-- {/key} -->
 				</Box>
 			</T.Group>
 		{/each}

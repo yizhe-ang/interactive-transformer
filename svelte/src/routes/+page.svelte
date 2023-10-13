@@ -15,6 +15,10 @@
 	// const promise = test();
 
 	let isSplitpanesReady = false;
+
+  // TODO: Visualize loss for each token?
+
+  // TODO: Direct logit attribution
 </script>
 
 <Splitpanes on:ready={() => (isSplitpanesReady = true)} class="fixed inset-0">
@@ -26,7 +30,6 @@
 		{/if}
 	</Pane>
 
-	<!-- <Pane size={0}> -->
 	<Pane size={50}>
 		<DataView />
 	</Pane>
