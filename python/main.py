@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from transformer_lens import HookedTransformer, HookedTransformerConfig
 import torch as t
+import einops
 
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent
@@ -75,8 +76,7 @@ def input_text(payload: TextInput):
     logits, cache = model.run_with_cache(tokens, remove_batch_dim=True)
 
     app.package["cache"] = cache
-
-    print(str_tokens)
+    app.package["tokens"] = tokens
 
     return str_tokens
 
@@ -105,5 +105,27 @@ def get_attention_maps(layer: int):
     return attention_maps
 
 
+@app.get("/logit_attributions")
 def get_logit_attributions():
-    pass
+    cache = app.package["cache"]
+    model = app.package["model"]
+    tokens = app.package["tokens"]
+
+    embed = cache["embed"]
+    layer_results = [cache["result", i] for i in range(model.cfg.n_layers)]
+
+    W_U = model.W_U
+    W_U_correct_tokens = W_U[:, tokens[1:]]
+
+    direct_attributions = einops.einsum(
+        W_U_correct_tokens, embed[:-1], "emb seq, seq emb -> seq"
+    )
+    layer_attributions = [
+        einops.einsum(
+            W_U_correct_tokens, results[:-1], "emb seq, seq nhead emb -> seq nhead"
+        )
+        for results in layer_results
+    ]
+
+    # (seq_len - 1, n_components)
+    return t.concat([direct_attributions.unsqueeze(-1), *layer_attributions], dim=-1)

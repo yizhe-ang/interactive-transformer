@@ -1,6 +1,6 @@
 <script>
 	import FlowView from '$components/flow-view.svelte';
-	import DataView from '$components/data-view.svelte';
+	import AttentionView from '$components/attention-view.svelte';
 	import TextInput from '$components/text-input.svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
@@ -31,7 +31,7 @@
 	</Pane>
 
 	<Pane size={50}>
-		<DataView />
+    <AttentionView />
 	</Pane>
 </Splitpanes>
 

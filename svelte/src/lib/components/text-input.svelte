@@ -112,7 +112,7 @@
 						handleDOMEvents: {
 							mouseover(view, event) {
 								// Update selected token
-								const tokenI = event.target.dataset.i;
+								const tokenI = +event.target.dataset.i;
 
 								// Only filter for token dom elements
 								if (tokenI === undefined) return;

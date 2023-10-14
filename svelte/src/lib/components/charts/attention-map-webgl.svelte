@@ -1,99 +1,103 @@
 <script>
-	import { T, useThrelte } from '@threlte/core';
+	import { T } from '@threlte/core';
 	import { Text, createTransition, useCursor } from '@threlte/extras';
-	import { scaleBand, scaleSequential, range, interpolateCividis, interpolatePuBuGn } from 'd3';
 	import { cubicIn, cubicOut } from 'svelte/easing';
 	import { spring } from 'svelte/motion';
-	import { Color, MeshBasicMaterial, PlaneGeometry } from 'three';
-	import { selectedAttentionMapI } from '$lib/stores.js';
+	import { Color, DataTexture, ShaderMaterial, Vector2 } from 'three';
+	import { selectedAttentionMapI, selectedTokenI } from '$lib/stores.js';
 	import { attentionColorScale } from '$lib/constants.js';
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
+	import { range, scaleBand, scaleQuantize } from 'd3';
 
 	// FIXME: Interaction handling is messy
 	// Is there a ui component for this?
 
-	const { size } = useThrelte();
-
 	export let data;
 	export let i = 0;
 
-	const clickedI = getContext('clickedI');
+	let mouseUv = new Vector2(-1, -1);
 
+	const clickedI = getContext('clickedI');
 	$: clicked = $clickedI == i;
 
 	const colorScale = attentionColorScale;
 
-	let xScale;
-	let yScale;
-	let positions;
-	let colors;
+	let texture;
 
 	$: onDataUpdate(data);
 	function onDataUpdate(data) {
-		xScale = scaleBand(range(data.length), [-0.5, 0.5]);
-		yScale = scaleBand(range(data.length), [0.5, -0.5]);
-		positions = new Float32Array(data.length * data.length * 3);
+		const colors = new Uint8Array(data.length * data.length * 4);
+
+		// Update data
 		for (let i = 0; i < data.length; i++) {
 			for (let j = 0; j < data.length; j++) {
 				const k = i * data.length + j;
 
-				positions[k * 3 + 0] = xScale(i);
-				positions[k * 3 + 1] = yScale(j);
-				positions[k * 3 + 2] = 0;
-			}
-		}
+				// Make it lower triangular
+				if (j > i) {
+					colors[k * 4 + 0] = 0;
+					colors[k * 4 + 1] = 0;
+					colors[k * 4 + 2] = 0;
+					colors[k * 4 + 3] = 0;
+				} else {
+					const color = new Color(colorScale(data[i][j]));
 
-		colors = new Float32Array(data.length * data.length * 3);
-		for (let i = 0; i < data.length; i++) {
-			for (let j = 0; j < data.length; j++) {
-				const k = i * data.length + j;
-
-				const color = new Color(colorScale(data[j][i]));
-
-				colors[k * 3 + 0] = color.r;
-				colors[k * 3 + 1] = color.g;
-				colors[k * 3 + 2] = color.b;
-
-				// HACK: Make it lower triangular
-				if (i > j) {
-					colors[k * 3 + 0] = 1;
-					colors[k * 3 + 1] = 1;
-					colors[k * 3 + 2] = 1;
+					colors[k * 4 + 0] = Math.floor(color.r * 255);
+					colors[k * 4 + 1] = Math.floor(color.g * 255);
+					colors[k * 4 + 2] = Math.floor(color.b * 255);
+					colors[k * 4 + 3] = 255;
 				}
 			}
 		}
+
+		texture = new DataTexture(colors, data.length, data.length);
+		texture.needsUpdate = true;
+		texture.flipY = true;
 	}
 
 	const vertexShader = /* glsl */ `
-    uniform float viewportHeight;
-    uniform float pointSize;
-    attribute vec3 color;
-    varying vec3 vColor;
+    varying vec2 vUv;
 
     void main() {
-      vColor = color;
+      vUv = uv;
 
       vec4 modelPosition = modelMatrix * vec4(position, 1.0);
       vec4 viewPosition = viewMatrix * modelPosition;
       vec4 projectedPosition = projectionMatrix * viewPosition;
 
       gl_Position = projectedPosition;
-
-      gl_PointSize = viewportHeight * pointSize * 2.0 * (1.0 / - viewPosition.z);
     }
   `;
 
 	// FIXME: Rounded edges or circle?
 	const fragmentShader = /* glsl */ `
-    varying vec3 vColor;
+    uniform sampler2D uTexture;
+    uniform vec2 uMouseUv;
+    uniform float uLineY;
+    uniform float uBandWidth;
+    varying vec2 vUv;
 
     void main() {
-      gl_FragColor = vec4(vColor, 1.);
+      vec4 textureColor = texture2D(uTexture, vUv);
+
+      // Discard if not lower triangular
+      if (textureColor.a == 0.0) discard;
+
+      float lineWidth = uBandWidth / 15.0;
+
+      // FIXME: Get rid of branching?
+      // Draw horizontal line
+      bool isTopLine = abs(uLineY - vUv.y + lineWidth + uBandWidth) < lineWidth;
+      bool isBottomLine = abs(uLineY - vUv.y - lineWidth) < lineWidth;
+      bool isLine = isTopLine || isBottomLine;
+
+      // FIXME: Change line color
+      gl_FragColor = isLine ? vec4(vec3(0.0), 1.0) : textureColor;
     }
   `;
 
 	// Transitions
-	const { onPointerEnter, onPointerLeave, hovering } = useCursor();
+	const { hovering } = useCursor();
 	const scale = spring(0.9);
 
 	$: animDelay = i * 70;
@@ -108,17 +112,6 @@
 			easing: direction === 'in' ? cubicOut : cubicIn
 		};
 	});
-
-	// $: onHover($hovering);
-	// function onHover(hovering) {
-	// 	if ($clickedI != i) {
-	// 		scale.set(hovering ? 1 : 0.9);
-	// 	}
-
-	// 	if (hovering) {
-	// 		if ($clickedI == null) $selectedAttentionMapI = i;
-	// 	}
-	// }
 
 	$: updateScale($hovering, clicked);
 	function updateScale() {
@@ -136,62 +129,94 @@
 	$: if ($clickedI == null) {
 		if ($hovering) $selectedAttentionMapI = i;
 	}
+
+	// Get selected destination token
+	let lineY = -1;
+
+	$: uvToTokenScale = scaleQuantize([0, 1], range(data.length - 1, -1, -1));
+	$: tokenToUvScale = scaleBand(range(data.length), [1, 0]);
+	$: bandWidth = tokenToUvScale.bandwidth();
+
+	// Define shader material
+	const material = new ShaderMaterial({
+		fragmentShader,
+		vertexShader,
+		uniforms: {
+			uTexture: {
+				value: texture
+			},
+			uMouseUv: {
+				value: mouseUv
+			},
+			uLineY: {
+				value: lineY
+			},
+			uBandWidth: {
+				value: bandWidth
+			}
+		}
+	});
+
+	$: onSelectedTokenUpdate($selectedTokenI);
+	function onSelectedTokenUpdate() {
+		if ($selectedAttentionMapI == i || $hovering) lineY = tokenToUvScale($selectedTokenI);
+
+    console.log($selectedTokenI)
+	}
+
+	// Update shader uniforms
+	$: material.uniforms.uMouseUv.value = mouseUv;
+	$: material.uniforms.uTexture.value = texture;
+	$: material.uniforms.uLineY.value = lineY;
+	$: material.uniforms.uBandWidth.value = bandWidth;
 </script>
 
 <!-- HACK: -->
-<T.Group in={scaleTransition} out={scaleTransition} position.z={5}>
-	<!-- FIXME: Just use a plane? -->
-	<T.Points scale={[$scale, $scale, 1]}>
-		<T.BufferGeometry>
-			<!-- FIXME: Set this manually? -->
-			<!-- Re-render whenever data changes -->
-			{#key data}
-				<T.BufferAttribute
-					attach="attributes.position"
-					count={data.length * data.length}
-					array={positions}
-					itemSize={3}
-				/>
-				<T.BufferAttribute
-					attach="attributes.color"
-					count={data.length * data.length}
-					array={colors}
-					itemSize={3}
-				/>
-			{/key}
-		</T.BufferGeometry>
-		{#key xScale}
-			<T.ShaderMaterial
-				{vertexShader}
-				{fragmentShader}
-				uniforms={{
-					viewportHeight: {
-						value: $size.height
-					},
-					pointSize: {
-						value: xScale.bandwidth()
-					}
-				}}
-			/>
-		{/key}
-	</T.Points>
+<T.Group in={scaleTransition} out={scaleTransition}>
 	<Text
 		text={i}
 		fontSize={0.3}
-		position={[0.1, 0.2, 0]}
+		position={[0.4, 0.4, 0]}
 		fillOpacity={clicked ? 0.9 : 0.5}
 		color={clicked ? 'black' : null}
+		anchorX="right"
 	/>
 
+	<!-- FIXME: Using a plane and a data texture -->
 	<T.Mesh
-		on:pointerenter={onPointerEnter}
-		on:pointerleave={onPointerLeave}
+		on:pointerenter={(e) => {
+			$hovering = true;
+		}}
+		on:pointermove={(e) => {
+			mouseUv = e.uv;
+
+			// Find hovered token
+			$selectedTokenI = uvToTokenScale(mouseUv.y);
+
+			// Find row position
+			// lineY = tokenToUvScale($selectedTokenI)
+		}}
+		on:pointerleave={() => {
+			// mouseUv.x = -1;
+			// mouseUv.y = -1;
+			lineY = -1;
+
+			$hovering = false;
+		}}
 		on:click={() => {
 			$clickedI = $clickedI == i ? null : i;
 			$selectedAttentionMapI = selectedAttentionMapI == i ? null : i;
 		}}
 	>
 		<T.PlaneGeometry args={[1, 1]} />
-		<T.MeshBasicMaterial transparent opacity={0} />
+		<T is={material} attach="material" />
+		<!-- <T.MeshBasicMaterial transparent color={undefined} toneMapped={false}>
+			<T.DataTexture
+				args={[colors, data.length, data.length]}
+				attach="map"
+				needsUpdate
+				flipY={true}
+			/>
+		</T.MeshBasicMaterial> -->
 	</T.Mesh>
 </T.Group>
