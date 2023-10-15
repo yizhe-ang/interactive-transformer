@@ -31,10 +31,9 @@
 	}
 
 	const numColumns = 3;
-	const gap = 0.1;
 </script>
 
-<T.PerspectiveCamera makeDefault position={[0, 0, 200]} far={500} near={0.1}>
+<T.PerspectiveCamera makeDefault position={[0, 0, 200]} far={1000} near={0.1}>
 	<OrbitControls
 		enableDamping
 		mouseButtons={{
@@ -47,19 +46,14 @@
 </T.PerspectiveCamera>
 
 <!-- TODO: Use InstancedMesh to be more efficient? -->
-<T.Group position.y={1.2}>
-	<Flex width={numColumns + (numColumns - 1) * gap} flexWrap="Wrap" gap={0.1}>
-		{#await attentionMaps.load() then _}
-			{#each $attentionMaps as data, i}
-				<!-- <Box width={1} height={1}> -->
-				<Box>
-					<!-- HACK: -->
-					<!-- {#key data} -->
-					<!-- <AttentionMap {data} {i} /> -->
-					<Heatmap {data} {i} colorScale={attentionColorScale} />
-					<!-- {/key} -->
-				</Box>
-			{/each}
-		{/await}
+{#await attentionMaps.load() then _}
+	{@const width = $attentionMaps[0].length}
+	{@const gap = width / 5}
+	<Flex width={(width + gap) * numColumns} flexWrap="Wrap" {gap}>
+		{#each $attentionMaps as data, i}
+			<Box>
+				<Heatmap {data} {i} colorScale={attentionColorScale} />
+			</Box>
+		{/each}
 	</Flex>
-</T.Group>
+{/await}
