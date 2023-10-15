@@ -17,12 +17,15 @@
 		selectedTokenI,
 		selectedAttentionRow,
 		selectedLayer,
-		selectedAttentionMapI
+		selectedAttentionMapI,
+		tokenData
 	} from '$lib/stores.js';
 	import { Decoration, DecorationSet } from '@tiptap/pm/view';
 	import { attentionColorScale } from '$lib/constants.js';
 	import { isDarkColor } from '$lib/helpers.js';
 	import { ChevronDown } from 'lucide-svelte';
+
+	$: console.log($tokenData[0]);
 
 	let editor;
 	let clickedTokenI;
@@ -62,8 +65,9 @@
 				// 	return;
 				// }
 
-				const data = $selectedAttentionRow[i];
-				const bgColor = data == 0 ? 'transparent' : attentionColorScale(data);
+				// const data = $selectedAttentionRow[i];
+				// const bgColor = data == 0 ? 'transparent' : attentionColorScale(data);
+				const bgColor = $tokenData[i];
 
 				let styleClasses = `rounded-sm transition-all hover:shadow-lg hover:shadow-slate-500`;
 
@@ -218,9 +222,9 @@
 	// 	});
 	// }
 
-	$: onUpdate($selectedAttentionRow);
+	$: onUpdate($tokenData);
 	function onUpdate() {
-		if (!$editor || !$selectedAttentionRow) return;
+		if (!$editor || !$tokenData) return;
 		// console.log($selectedAttentionRow);
 
 		// HACK: Manually trigger an update

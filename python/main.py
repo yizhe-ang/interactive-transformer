@@ -29,9 +29,18 @@ class TextInput(BaseModel):
     text: str
 
 
+def process_tensor(tensor):
+    # FIXME: Any processing required? Rounding etc. to reduce memory footprint
+    return tensor.cpu().numpy().tolist()
+
+
 @app.on_event("startup")
 def startup_event():
+    # FIXME: Make sure app works with different models
+
     # Init TransformerLens
+
+    # gpt2-small
     # model: HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
 
     # 2L attention-only transformer
@@ -60,9 +69,13 @@ def startup_event():
     app.package = {"model": model}
 
 
-@app.get("/num_layers")
-def get_num_layers():
-    return app.package["model"].cfg.n_layers
+@app.get("/model_config")
+def get_model_config():
+    cfg = app.package["model"].cfg
+
+    config = {"numLayers": cfg.n_layers, "numHeads": cfg.n_heads}
+
+    return config
 
 
 @app.post("/input_text")
@@ -76,7 +89,7 @@ def input_text(payload: TextInput):
     logits, cache = model.run_with_cache(tokens, remove_batch_dim=True)
 
     app.package["cache"] = cache
-    app.package["tokens"] = tokens
+    app.package["tokens"] = tokens[0]
 
     return str_tokens
 
@@ -97,9 +110,7 @@ def input_text(payload: TextInput):
 @app.get("/attention_maps/{layer}")
 def get_attention_maps(layer: int):
     # [n_heads, n_tokens, n_tokens]
-    attention_maps = app.package["cache"]["pattern", layer].cpu().numpy().tolist()
-
-    # FIXME: Any processing required? Rounding etc.
+    attention_maps = process_tensor(app.package["cache"]["pattern", layer])
 
     # return {"value": attention_maps}
     return attention_maps
@@ -111,21 +122,27 @@ def get_logit_attributions():
     model = app.package["model"]
     tokens = app.package["tokens"]
 
-    embed = cache["embed"]
-    layer_results = [cache["result", i] for i in range(model.cfg.n_layers)]
+    with t.inference_mode():
+        embed = cache["embed"]
+        layer_results = [cache["result", i] for i in range(model.cfg.n_layers)]
 
-    W_U = model.W_U
-    W_U_correct_tokens = W_U[:, tokens[1:]]
+        W_U = model.W_U
+        W_U_correct_tokens = W_U[:, tokens[1:]]
 
-    direct_attributions = einops.einsum(
-        W_U_correct_tokens, embed[:-1], "emb seq, seq emb -> seq"
-    )
-    layer_attributions = [
-        einops.einsum(
-            W_U_correct_tokens, results[:-1], "emb seq, seq nhead emb -> seq nhead"
+        # FIXME:
+        direct_attributions = einops.einsum(
+            W_U_correct_tokens, embed[:-1], "emb seq, seq emb -> seq"
         )
-        for results in layer_results
-    ]
+        layer_attributions = [
+            einops.einsum(
+                W_U_correct_tokens, results[:-1], "emb seq, seq nhead emb -> seq nhead"
+            )
+            for results in layer_results
+        ]
 
-    # (seq_len - 1, n_components)
-    return t.concat([direct_attributions.unsqueeze(-1), *layer_attributions], dim=-1)
+        # (seq_len - 1, n_components)
+        attributions = t.concat(
+            [direct_attributions.unsqueeze(-1), *layer_attributions], dim=-1
+        )
+
+    return process_tensor(attributions)

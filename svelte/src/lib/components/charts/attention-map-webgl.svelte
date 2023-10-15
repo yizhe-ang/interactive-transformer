@@ -171,6 +171,8 @@
 	$: material.uniforms.uBandWidth.value = bandWidth;
 </script>
 
+<!-- FIXME: Just use a line geometry here??? -->
+
 <!-- HACK: -->
 <T.Group in={scaleTransition} out={scaleTransition}>
 	<Text

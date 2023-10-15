@@ -7,6 +7,8 @@
 	import { writable } from 'svelte/store';
 	import { setContext } from 'svelte';
 	import { attentionMaps, selectedAttentionMap } from '$lib/stores.js';
+	import { attentionColorScale } from '$lib/constants.js';
+	import Heatmap from '$components/charts/heatmap.svelte';
 
 	// TODO:
 	// https://threlte.xyz/docs/reference/flex/getting-started
@@ -32,7 +34,7 @@
 	const gap = 0.1;
 </script>
 
-<T.PerspectiveCamera makeDefault position={[0, 0, 6]} far={50} near={0.1}>
+<T.PerspectiveCamera makeDefault position={[0, 0, 200]} far={500} near={0.1}>
 	<OrbitControls
 		enableDamping
 		mouseButtons={{
@@ -49,10 +51,12 @@
 	<Flex width={numColumns + (numColumns - 1) * gap} flexWrap="Wrap" gap={0.1}>
 		{#await attentionMaps.load() then _}
 			{#each $attentionMaps as data, i}
-				<Box width={1} height={1}>
+				<!-- <Box width={1} height={1}> -->
+				<Box>
 					<!-- HACK: -->
 					<!-- {#key data} -->
-					<AttentionMap {data} {i} />
+					<!-- <AttentionMap {data} {i} /> -->
+					<Heatmap {data} {i} colorScale={attentionColorScale} />
 					<!-- {/key} -->
 				</Box>
 			{/each}

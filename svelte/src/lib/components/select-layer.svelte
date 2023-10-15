@@ -1,7 +1,7 @@
 <script>
 	import * as Select from '$ui/select';
 
-	import { selectedLayer, numLayers } from '$lib/stores.js';
+	import { selectedLayer, modelConfig } from '$lib/stores.js';
 
 	let selected = {
 		disabled: false,
@@ -17,8 +17,8 @@
 		<Select.Value placeholder="Layer" />
 	</Select.Trigger>
 	<Select.Content>
-		{#await numLayers.load() then _}
-			{#each Array($numLayers).keys() as i}
+		{#await modelConfig.load() then _}
+			{#each Array($modelConfig.numLayers).keys() as i}
 				<Select.Item value={i}>{i}</Select.Item>
 			{/each}
 		{/await}
