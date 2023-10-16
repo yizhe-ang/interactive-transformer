@@ -32,12 +32,16 @@ export function getColumns(arr, indices) {
 // TODO: More complex animation
 // Animating each point one after the other
 // Have to use a shader? See MathBox
-export const opacityTransition = (i = 0) => {
+export const opacityTransition = (i = 0, shader = true) => {
 	return createTransition((ref, { direction }) => {
 		ref.transparent = true;
 		return {
 			tick(t) {
-				ref.uniforms.uOpacity.value = t;
+				if (shader) {
+					ref.uniforms.uOpacity.value = t;
+				} else {
+					ref.opacity = t;
+				}
 			},
 			delay: i * 70 + (direction === 'in' ? 200 : 0),
 			duration: 200,

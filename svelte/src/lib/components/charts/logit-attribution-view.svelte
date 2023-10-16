@@ -57,7 +57,7 @@
 		<Flex gap={1}>
 			<!-- Direct path -->
 			<Box>
-				<Heatmap data={getColumns(data, [0])} {colorScale} />
+				<Heatmap data={getColumns(data, [0])} {colorScale} direction={'column'} />
 			</Box>
 
 			<!-- Head paths -->
@@ -66,7 +66,12 @@
 				{@const end = start + $modelConfig.numHeads}
 
 				<Box>
-					<Heatmap data={getColumns(data, range(start, end))} {colorScale} i={i + 1} />
+					<Heatmap
+						data={getColumns(data, range(start, end))}
+						{colorScale}
+						i={i + 1}
+						direction="column"
+					/>
 				</Box>
 			{/each}
 		</Flex>

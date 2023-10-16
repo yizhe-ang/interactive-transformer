@@ -1,6 +1,6 @@
 <script>
 	import AttentionView from '$components/charts/attention-view.svelte';
-	import LogitAttributionVis from '$components/charts/logit-attribution-vis.svelte';
+	import LogitAttributionView from '$components/charts/logit-attribution-view.svelte';
 	import { Canvas } from '@threlte/core';
 	import * as Card from '$ui/card';
 	import {
@@ -19,8 +19,8 @@
 
 <div class="w-full h-full bg-background relative">
 	<Canvas colorManagementEnabled={false}>
-		<AttentionView />
-		<!-- <LogitAttributionVis /> -->
+		<!-- <AttentionView /> -->
+		<LogitAttributionView />
 	</Canvas>
 
 	<!-- <div class="absolute left-0 right-0 bottom-0 grid place-content-center">

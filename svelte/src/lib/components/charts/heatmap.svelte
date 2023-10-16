@@ -8,12 +8,13 @@
 
 	export let data;
 	export let colorScale;
-  export let i = 0;
-  export let direction = "row"
+	export let i = 0;
+	export let direction = 'row';
+	export let renderZero = true;
 
 	const selectedData = getContext('selectedData');
 
-	const outlinePositionX = spring(0);
+	const outlinePosition = spring(0);
 	const outlineOpacity = spring(0);
 
 	let texture;
@@ -32,12 +33,24 @@
 			for (let j = 0; j < width; j++) {
 				const k = i * width + j;
 
-				const color = new Color(colorScale(data[i][j]));
+				// Don't render if color is null
+				if (colorScale(data[i][j]) === null) {
+					colors[k * 4 + 0] = 0;
+					colors[k * 4 + 1] = 0;
+					colors[k * 4 + 2] = 0;
+					colors[k * 4 + 3] = 0;
+				} else {
+					const color = new Color(colorScale(data[i][j]));
 
-				colors[k * 4 + 0] = Math.floor(color.r * 255);
-				colors[k * 4 + 1] = Math.floor(color.g * 255);
-				colors[k * 4 + 2] = Math.floor(color.b * 255);
-				colors[k * 4 + 3] = 255;
+					colors[k * 4 + 0] = Math.floor(color.r * 255);
+					colors[k * 4 + 1] = Math.floor(color.g * 255);
+					colors[k * 4 + 2] = Math.floor(color.b * 255);
+					colors[k * 4 + 3] = 255;
+				}
+
+				// if (!renderZero && data[i][j] == 0) {
+				// 	colors[k * 4 + 3] = 0;
+				// }
 			}
 		}
 
@@ -68,6 +81,8 @@
     void main() {
       vec4 textureColor = texture2D(uTexture, vUv);
 
+      if (textureColor.a == 0.0) discard;
+
       // gl_FragColor = textureColor;
       gl_FragColor = vec4(textureColor.rgb, uOpacity);
     }
@@ -89,24 +104,23 @@
 
 	// Update shader uniforms
 	$: material.uniforms.uTexture.value = texture;
-
-	// $: selectedI = 0;
-
-	// $: $selectedData = getColumns(data, [selectedI])
-	// 	.flat()
-	// 	.map((d) => colorScale(d));
 </script>
 
 <T.Mesh
 	on:pointermove={(e) => {
-		// $outlinePositionX = Math.floor(e.point.x + 0.5) - 0.5;
+		if (direction == 'column') {
+			const selectedI = Math.floor(e.uv.x * width);
+			$outlinePosition = selectedI - width / 2;
 
-		const selectedI = Math.floor(e.uv.x * width);
-		$outlinePositionX = selectedI - width / 2;
+			$selectedData = getColumns(data, [selectedI])
+				.flat()
+				.map((d) => colorScale(d));
+		} else if (direction == 'row') {
+			const selectedI = Math.floor((1 - e.uv.y) * height);
+			$outlinePosition = -selectedI - 1 + height / 2;
 
-		$selectedData = getColumns(data, [selectedI])
-			.flat()
-			.map((d) => colorScale(d));
+			$selectedData = data[selectedI].map((d) => colorScale(d));
+		}
 	}}
 	on:pointerenter={(e) => {
 		$outlineOpacity = 1;
@@ -122,13 +136,11 @@
 <!-- Outline -->
 <!-- TODO: Change to a glass / lens material? Like a microscope, refraction etc. -->
 <T.Group position.z={0.1} opacity={0}>
-	{#each [0, 1] as x}
-		<MeshLine
-			points={[
-				new Vector3($outlinePositionX + x, -height / 2, 0),
-				new Vector3($outlinePositionX + x, height / 2, 0)
-			]}
-			opacity={$outlineOpacity}
-		/>
+	{#each [0, 1] as i}
+		{@const x1 = direction == 'column' ? $outlinePosition + i : -width / 2}
+		{@const x2 = direction == 'column' ? $outlinePosition + i : width / 2}
+		{@const y1 = direction == 'column' ? -height / 2 : $outlinePosition + i}
+		{@const y2 = direction == 'column' ? height / 2 : $outlinePosition + i}
+		<MeshLine points={[new Vector3(x1, y1, 0), new Vector3(x2, y2, 0)]} opacity={$outlineOpacity} />
 	{/each}
 </T.Group>

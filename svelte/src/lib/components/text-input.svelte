@@ -21,11 +21,10 @@
 		tokenData
 	} from '$lib/stores.js';
 	import { Decoration, DecorationSet } from '@tiptap/pm/view';
-	import { attentionColorScale } from '$lib/constants.js';
 	import { isDarkColor } from '$lib/helpers.js';
 	import { ChevronDown } from 'lucide-svelte';
 
-	$: console.log($tokenData[0]);
+	$: console.log($tokenData);
 
 	let editor;
 	let clickedTokenI;
