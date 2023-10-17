@@ -7,7 +7,8 @@ import {
 } from '@square/svelte-store';
 import { getColumns } from './helpers';
 
-export const dataView = writable('logitAttribution');
+export const selectedDataView = writable('attention');
+// export const selectedDataView = writable('logitAttribution');
 
 export const inputText = writable(
 	`Natural language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.`

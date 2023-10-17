@@ -88,5 +88,5 @@
 >
 	<Controls />
 	<Background variant={BackgroundVariant.Dots} />
-	<MiniMap />
+	<!-- <MiniMap /> -->
 </SvelteFlow>

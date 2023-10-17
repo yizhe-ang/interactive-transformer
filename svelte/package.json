@@ -27,6 +27,7 @@
 	"type": "module",
 	"dependencies": {
 		"@fontsource-variable/roboto-flex": "^5.0.8",
+		"@pmndrs/vanilla": "^1.13.3",
 		"@square/svelte-store": "^1.0.17",
 		"@tailwindcss/typography": "^0.5.10",
 		"@threlte/core": "^6.0.10",

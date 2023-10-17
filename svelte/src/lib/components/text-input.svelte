@@ -13,18 +13,18 @@
 	import {
 		inputText,
 		tokens,
-		selectedAttentionMap,
 		selectedTokenI,
-		selectedAttentionRow,
 		selectedLayer,
 		selectedAttentionMapI,
-		tokenData
+		tokenData,
+		selectedDataView
 	} from '$lib/stores.js';
 	import { Decoration, DecorationSet } from '@tiptap/pm/view';
 	import { isDarkColor } from '$lib/helpers.js';
 	import { ChevronDown } from 'lucide-svelte';
-
-	$: console.log($tokenData);
+	import ColorLegend from '$components/charts/color-legend.svelte';
+	import SparkColorLegend from '$components/charts/spark-color-legend.svelte';
+	import { attentionColorScaleAlt } from '$lib/constants.js';
 
 	let editor;
 	let clickedTokenI;
@@ -248,33 +248,26 @@
 	<Card.Header class="pb-1">
 		{#await tokens.load() then _}
 			<!-- TODO: have a color scale here? -->
-			<Card.Description class="{$tokens.length == 1 ? 'opacity-0' : ''} transition"
-				>how <span class="bg-slate-200">"{$tokens[$selectedTokenI]}" attends</span> to previous
-				tokens in layer {$selectedLayer} -> attention head {$selectedAttentionMapI}</Card.Description
-			>
+			<Card.Description class="{$tokens.length == 1 ? 'opacity-0' : ''} transition">
+				{#if $selectedDataView == 'attention'}
+					<span>
+						how
+						<SparkColorLegend colorScale={attentionColorScaleAlt}>
+							<span class="relative w-full flex justify-between px-1"
+								><span class="text-foreground">"{$tokens[$selectedTokenI]}"</span>
+								<span class="text-background">attends</span>
+							</span>
+						</SparkColorLegend>
+						to previous tokens in layer {$selectedLayer} -> attention head {$selectedAttentionMapI}
+					</span>
+				{:else if $selectedDataView == 'logitAttribution'}
+					<span />
+				{/if}
+			</Card.Description>
 		{/await}
 	</Card.Header>
 	<Card.Content class="pb-0">
-		<!-- {#await Promise.all([tokens.load(), selectedAttentionMap.load()]) then _} -->
 		<EditorContent editor={$editor} />
-		<!-- {/await} -->
-		<!-- <div
-			contenteditable="true"
-			class="text-lg w-[65ch] p-2 tracking-wide"
-			on:input={(e) => {
-				// Delete first token
-				$inputText = e.target.textContent;
-			}}
-		>
-			{$inputText}
-		</div>
-		<div class="text-lg w-[65ch] p-2 tracking-wide">
-			{#await Promise.all([tokens.load(), selectedAttentionMap.load()]) then _}
-				{#each $tokens as token, i}
-					<Token text={token} data={$selectedAttentionMap[$selectedAttentionMap.length - 1][i]} />
-				{/each}
-			{/await}
-		</div> -->
 	</Card.Content>
 	<Card.Footer class="pb-0">
 		<Toggle
@@ -297,10 +290,6 @@
 		>
 	</Card.Footer>
 </Card.Root>
-
-<!-- {#await tokens then tokens}
-  {tokens}
-{/await} -->
 
 <style lang="postcss">
 	:global(.tiptap) {

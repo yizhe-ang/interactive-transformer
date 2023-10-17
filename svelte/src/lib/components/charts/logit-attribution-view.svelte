@@ -8,18 +8,9 @@
 	import { getColumns } from '$lib/helpers.js';
 	import { range, extent, max } from 'd3';
 	import { logitAttributionColorScale } from '$lib/constants.js';
-	import { onMount, setContext } from 'svelte';
+	import { getContext, onMount, setContext } from 'svelte';
 
-	interactivity();
-	transitions();
-
-	const { size, renderer, scene, camera } = useThrelte();
-
-	$: onSizeChange($size);
-	function onSizeChange() {
-		// To prevent flickering on resize
-		renderer.render(scene, $camera);
-	}
+	const cameraControls = getContext('cameraControls');
 
 	$: data = $logitAttributionData;
 
@@ -36,25 +27,26 @@
 				.map((d) => colorScale(d));
 		});
 	});
-</script>
 
-<T.PerspectiveCamera makeDefault position={[0, 0, 70]} far={300} near={0.1}>
-	<OrbitControls
-		enableDamping
-		mouseButtons={{
-			RIGHT: THREE.MOUSE.ROTATE,
-			MIDDLE: THREE.MOUSE.DOLLY,
-			LEFT: THREE.MOUSE.PAN
-		}}
-		zoomSpeed={0.3}
-	/>
-</T.PerspectiveCamera>
+	$: padding = data?.length / 10;
+</script>
 
 {#await logitAttributionData.load() then _}
 	<!-- Center the vis -->
 	<!-- FIXME: Use camera-controls to fit view to object? -->
-	<T.Group position={[-data[0].length / 2, data.length / 2, 0]}>
-		<Flex gap={1}>
+	<!-- <T.Group position={[-data[0].length / 2, data.length / 2, 0]}> -->
+	<T.Group let:ref>
+		<Flex
+			gap={1}
+			on:reflow={({ width, height }) => {
+				$cameraControls.fitToBox(ref, false, {
+					paddingTop: padding,
+					paddingRight: padding,
+					paddingBottom: padding,
+					paddingLeft: padding
+				});
+			}}
+		>
 			<!-- Direct path -->
 			<Box>
 				<Heatmap data={getColumns(data, [0])} {colorScale} direction={'column'} />
