@@ -1,6 +1,6 @@
 <script>
 	import { T, extend, useFrame, useThrelte } from '@threlte/core';
-	import { interactivity, transitions } from '@threlte/extras';
+	import { Environment, interactivity, transitions } from '@threlte/extras';
 	import * as THREE from 'three';
 	import { writable } from 'svelte/store';
 	import { setContext } from 'svelte';
@@ -35,7 +35,18 @@
 		bind:ref={$cameraControls}
 		args={[ref, renderer.domElement]}
 		mouseButtons.left={CameraControls.ACTION.TRUCK}
+		mouseButtons.right={CameraControls.ACTION.ROTATE}
 	/>
 </T.PerspectiveCamera>
+
+<T.DirectionalLight intensity={0.5} />
+<T.AmbientLight intensity={0.5} />
+
+<!-- FIXME: Have an environment map too? -->
+<!-- <Environment
+  path="/"
+  files="shanghai_riverside_1k.hdr"
+  format="hdr"
+/> -->
 
 <slot />

@@ -51,6 +51,7 @@
 		"tailwind-merge": "^1.14.0",
 		"tailwind-variants": "^0.1.14",
 		"three": "^0.157.0",
+		"three-stdlib": "^2.27.2",
 		"webcola": "^3.4.0"
 	}
 }

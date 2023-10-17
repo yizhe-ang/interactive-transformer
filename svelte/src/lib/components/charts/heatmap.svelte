@@ -1,16 +1,26 @@
 <script>
 	import MeshLine from '$components/charts/mesh-line.svelte';
-	import { T } from '@threlte/core';
-	import { Vector3, Color, ShaderMaterial, DataTexture } from 'three';
+	import { T, extend } from '@threlte/core';
+	import {
+		Vector3,
+		Color,
+		ShaderMaterial,
+		DataTexture,
+		DoubleSide,
+		MeshStandardMaterial
+	} from 'three';
 	import { spring } from 'svelte/motion';
 	import { getContext } from 'svelte';
 	import { getColumns, opacityTransition } from '$lib/helpers.js';
+	import { RoundedBoxGeometry } from '@threlte/extras';
+	// import { MeshTransmissionMaterial } from "@pmndrs/vanilla"
+	// import { MeshTransmissionMaterial } from '$lib/TransmissionMaterial.js';
+	// extend({ MeshTransmissionMaterial });
 
 	export let data;
 	export let colorScale;
 	export let i = 0;
 	export let direction = 'row';
-	export let renderZero = true;
 
 	const selectedData = getContext('selectedData');
 
@@ -47,10 +57,6 @@
 					colors[k * 4 + 2] = Math.floor(color.b * 255);
 					colors[k * 4 + 3] = 255;
 				}
-
-				// if (!renderZero && data[i][j] == 0) {
-				// 	colors[k * 4 + 3] = 0;
-				// }
 			}
 		}
 
@@ -104,23 +110,32 @@
 
 	// Update shader uniforms
 	$: material.uniforms.uTexture.value = texture;
+
+	let selectedDatumPosition = null;
 </script>
 
 <T.Mesh
 	on:pointermove={(e) => {
+		const selectedI = Math.floor(e.uv.x * width);
+		const selectedJ = Math.floor((1 - e.uv.y) * height);
+
+		const x = selectedI - width / 2;
+		const y = -selectedJ - 1 + height / 2;
+
 		if (direction == 'column') {
-			const selectedI = Math.floor(e.uv.x * width);
-			$outlinePosition = selectedI - width / 2;
+			$outlinePosition = x;
 
 			$selectedData = getColumns(data, [selectedI])
 				.flat()
 				.map((d) => colorScale(d));
 		} else if (direction == 'row') {
-			const selectedI = Math.floor((1 - e.uv.y) * height);
-			$outlinePosition = -selectedI - 1 + height / 2;
+			$outlinePosition = y;
 
-			$selectedData = data[selectedI].map((d) => colorScale(d));
+			$selectedData = data[selectedJ].map((d) => colorScale(d));
 		}
+
+		// selectedDatum = data[selectedJ][selectedI]
+		selectedDatumPosition = [x, y];
 	}}
 	on:pointerenter={(e) => {
 		$outlineOpacity = 1;
@@ -135,7 +150,7 @@
 
 <!-- Outline -->
 <!-- TODO: Change to a glass / lens material? Like a microscope, refraction etc. -->
-<T.Group position.z={0.1} opacity={0}>
+<T.Group position.z={0.1}>
 	{#each [0, 1] as i}
 		{@const x1 = direction == 'column' ? $outlinePosition + i : -width / 2}
 		{@const x2 = direction == 'column' ? $outlinePosition + i : width / 2}
@@ -143,4 +158,24 @@
 		{@const y2 = direction == 'column' ? height / 2 : $outlinePosition + i}
 		<MeshLine points={[new Vector3(x1, y1, 0), new Vector3(x2, y2, 0)]} opacity={$outlineOpacity} />
 	{/each}
+
+	<!-- TODO: Rounded square for selected data point? -->
+
+	<!-- <T.Mesh>
+		<RoundedBoxGeometry args={[width, 1, 0.1]} />
+		<T.MeshTransmissionMaterial
+			args={[8]}
+			clearcoat={1}
+			clearcoatRoughness={0}
+			transmission={1}
+			chromaticAberration={0.1}
+			anisotropy={0.1}
+			roughness={0}
+			thickness={4.5}
+			ior={1.5}
+			distortion={0.1}
+			distortionScale={0.2}
+			temporalDistortion={0.2}
+		/>
+	</T.Mesh> -->
 </T.Group>
