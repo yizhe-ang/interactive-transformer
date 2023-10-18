@@ -41,30 +41,30 @@ def startup_event():
     # Init TransformerLens
 
     # gpt2-small
-    # model: HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
+    model: HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
 
     # 2L attention-only transformer
-    cfg = HookedTransformerConfig(
-        d_model=768,
-        d_head=64,
-        n_heads=12,
-        n_layers=2,
-        n_ctx=2048,
-        d_vocab=50278,
-        attention_dir="causal",
-        attn_only=True,  # defaults to False
-        tokenizer_name="EleutherAI/gpt-neox-20b",
-        seed=398,
-        use_attn_result=True,
-        normalization_type=None,  # defaults to "LN", i.e. layernorm with weights & biases
-        positional_embedding_type="shortformer",
-    )
+    # cfg = HookedTransformerConfig(
+    #     d_model=768,
+    #     d_head=64,
+    #     n_heads=12,
+    #     n_layers=2,
+    #     n_ctx=2048,
+    #     d_vocab=50278,
+    #     attention_dir="causal",
+    #     attn_only=True,  # defaults to False
+    #     tokenizer_name="EleutherAI/gpt-neox-20b",
+    #     seed=398,
+    #     use_attn_result=True,
+    #     normalization_type=None,  # defaults to "LN", i.e. layernorm with weights & biases
+    #     positional_embedding_type="shortformer",
+    # )
 
-    weights_dir = BASE_DIR / "model" / "attn_only_2L_half.pth"
+    # weights_dir = BASE_DIR / "model" / "attn_only_2L_half.pth"
 
-    model = HookedTransformer(cfg)
-    pretrained_weights = t.load(weights_dir, map_location=device)
-    model.load_state_dict(pretrained_weights)
+    # model = HookedTransformer(cfg)
+    # pretrained_weights = t.load(weights_dir, map_location=device)
+    # model.load_state_dict(pretrained_weights)
 
     app.package = {"model": model}
 
