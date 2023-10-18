@@ -3,8 +3,12 @@
 	import LogitAttributionView from '$components/charts/logit-attribution-view.svelte';
 	import DataViewScene from '$components/data-view-scene.svelte';
 	import { Canvas } from '@threlte/core';
-	import { selectedDataView } from '$lib/stores.js';
+	import { selectedDataView, tokenData, selectedDatum } from '$lib/stores.js';
 	import Test from './test.svelte';
+	import { setContext } from 'svelte';
+
+	setContext('selectedData', tokenData);
+	setContext('selectedDatum', selectedDatum);
 </script>
 
 <div class="w-full h-full bg-background relative">
@@ -15,7 +19,7 @@
 			{:else if $selectedDataView == 'logitAttribution'}
 				<LogitAttributionView />
 			{/if}
-      <!-- <Test /> -->
+			<!-- <Test /> -->
 		</DataViewScene>
 	</Canvas>
 </div>

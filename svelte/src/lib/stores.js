@@ -7,8 +7,8 @@ import {
 } from '@square/svelte-store';
 import { getColumns } from './helpers';
 
-// export const selectedDataView = writable('attention');
-export const selectedDataView = writable('logitAttribution');
+export const selectedDataView = writable('attention');
+// export const selectedDataView = writable('logitAttribution');
 
 export const inputText = writable(
 	`Natural language processing tasks, such as question answering, machine translation, reading comprehension, and summarization, are typically approached with supervised learning on taskspecific datasets.`
@@ -22,7 +22,7 @@ export const inputText = writable(
 
 export const selectedLayer = writable(0);
 
-export const selectedAttentionMapI = writable(0);
+export const selectedAttentionMapI = writable(null);
 
 export const selectedTokenI = writable(0);
 
@@ -87,4 +87,6 @@ export const logitAttributionData = asyncDerived(tokens, async () => {
 
 export const tokenData = writable(undefined);
 
-export const selectedDatum = writable(undefined);
+export const selectedDatum = writable({
+	position: [0, 0]
+});

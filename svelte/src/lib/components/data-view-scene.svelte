@@ -39,8 +39,8 @@
 	/>
 </T.PerspectiveCamera>
 
-<T.DirectionalLight intensity={0.5} />
-<T.AmbientLight intensity={0.5} />
+<!-- <T.DirectionalLight intensity={0.5} />
+<T.AmbientLight intensity={2} /> -->
 
 <!-- FIXME: Have an environment map too? -->
 <!-- <Environment

@@ -13,21 +13,28 @@
 	import {
 		inputText,
 		tokens,
+		attentionMaps,
 		selectedTokenI,
 		selectedLayer,
 		selectedAttentionMapI,
+		selectedAttentionMap,
 		tokenData,
-		selectedDataView
+		selectedDataView,
+		selectedAttentionRow
 	} from '$lib/stores.js';
 	import { Decoration, DecorationSet } from '@tiptap/pm/view';
 	import { isDarkColor } from '$lib/helpers.js';
 	import { ChevronDown } from 'lucide-svelte';
-	import ColorLegend from '$components/charts/color-legend.svelte';
 	import SparkColorLegend from '$components/charts/spark-color-legend.svelte';
-	import { attentionColorScaleAlt } from '$lib/constants.js';
+	import { attentionColorScaleAlt, attentionColorScale } from '$lib/constants.js';
+	import { fade } from 'svelte/transition';
+	import KeyTransition from '$components/key-transition.svelte';
 
 	let editor;
 	let clickedTokenI;
+	let startToken;
+
+	const editorTextClasses = 'text-lg tracking-wide';
 
 	// TODO: Visualize start token
 	// TODO: Have max-height for text-area
@@ -48,7 +55,20 @@
 
 			// HACK:
 			$tokens.forEach((t, i) => {
-				if (i == 0) return;
+				if (i == 0) {
+					const bgColor = $tokenData[i];
+					startToken.style.backgroundColor = bgColor;
+
+					if (isDarkColor(bgColor)) {
+						startToken.classList.remove('text-foreground');
+						startToken.classList.add('text-background');
+					} else {
+						startToken.classList.remove('text-background');
+						startToken.classList.add('text-foreground');
+					}
+
+					return;
+				}
 
 				const from = currentPosition;
 				const to = from + t.length;
@@ -118,39 +138,55 @@
 								const tokenI = +event.target.dataset.i;
 
 								// Only filter for token dom elements
-								if (tokenI === undefined) return;
+								if (isNaN(tokenI)) return;
 
-								if (clickedTokenI === undefined) {
-									$selectedTokenI = tokenI;
+								// if (clickedTokenI === undefined) {
+								// 	$selectedTokenI = tokenI;
+								// }
+
+								// $selectedTokenI = tokenI
+
+								if (!$selectedAttentionMapI) return;
+
+								$selectedTokenI = tokenI;
+
+								// Update token data
+								if ($selectedDataView == 'attention') {
+									$tokenData = $attentionMaps[$selectedAttentionMapI][tokenI].map((d) =>
+										attentionColorScale(d)
+									);
 								}
-							},
-							click(view, event) {
-								// Update selected token
-								const target = event.target;
-								const tokenI = target.dataset.i;
 
-								// Only filter for token dom elements
-								if (tokenI === undefined) return;
-
-								// Clicked styles
-								// const styles = 'shadow-lg shadow-slate-500';
-								const styles = 'shadow-lg';
-
-								// Unclick token
-								if (clickedTokenI == tokenI) {
-									clickedTokenI = undefined;
-
-									// Remove styles from clicked token
-									// target.classList.remove(styles);
-								} else {
-									clickedTokenI = tokenI;
-									$selectedTokenI = tokenI;
-
-									// Apply styles to clicked token
-									// target.classList.add(styles);
-									// target.classList.add("shadow-slate-500");
-								}
+								// TODO: Trigger markings in data view
 							}
+							// FIXME:
+							// click(view, event) {
+							// 	// Update selected token
+							// 	const target = event.target;
+							// 	const tokenI = target.dataset.i;
+
+							// 	// Only filter for token dom elements
+							// 	if (tokenI === undefined) return;
+
+							// 	// Clicked styles
+							// 	// const styles = 'shadow-lg shadow-slate-500';
+							// 	const styles = 'shadow-lg';
+
+							// 	// Unclick token
+							// 	if (clickedTokenI == tokenI) {
+							// 		clickedTokenI = undefined;
+
+							// 		// Remove styles from clicked token
+							// 		// target.classList.remove(styles);
+							// 	} else {
+							// 		clickedTokenI = tokenI;
+							// 		$selectedTokenI = tokenI;
+
+							// 		// Apply styles to clicked token
+							// 		// target.classList.add(styles);
+							// 		// target.classList.add("shadow-slate-500");
+							// 	}
+							// }
 						}
 					}
 				})
@@ -180,7 +216,7 @@
 			],
 			editorProps: {
 				attributes: {
-					class: 'text-lg w-[65ch] p-2 tracking-wide max-h-32 overflow-auto',
+					class: 'w-[65ch] p-2 max-h-32 overflow-auto' + ' ' + editorTextClasses,
 					style: 'transition: max-height 1s ease-in-out; scrollbar-gutter: stable both-edges;'
 				}
 			},
@@ -242,23 +278,34 @@
 	let isEditorExpanded = false;
 </script>
 
-<!-- <Textarea bind:value placeholder="input text" class="text-xl w-[65ch] bg-background" /> -->
-
 <Card.Root class="pointer-events-auto">
 	<Card.Header class="pb-1">
 		{#await tokens.load() then _}
-			<!-- TODO: have a color scale here? -->
-			<Card.Description class="{$tokens.length == 1 ? 'opacity-0' : ''} transition">
+			<Card.Description class="{$tokens.length == 1 ? 'opacity-0' : ''} transition pb-2">
 				{#if $selectedDataView == 'attention'}
 					<span>
 						how
 						<SparkColorLegend colorScale={attentionColorScaleAlt}>
-							<span class="relative w-full flex justify-between px-1"
-								><span class="text-foreground">"{$tokens[$selectedTokenI]}"</span>
-								<span class="text-background">attends</span>
-							</span>
+							<!-- <span class="relative w-full flex justify-between px-1" -->
+							>
+							<!-- {#key $selectedTokenI}
+								<span
+									transition:fade={{ duration: 200 }}
+									class="text-foreground absolute left-1 font-bold">{$tokens[$selectedTokenI]}</span
+								>
+							{/key} -->
+							<KeyTransition key={$selectedTokenI}>
+								<span class="text-foreground absolute left-1 font-bold"
+									>{$tokens[$selectedTokenI]}</span
+								>
+							</KeyTransition>
+							<span class="text-background absolute right-1">attends</span>
+							<!-- </span> -->
 						</SparkColorLegend>
-						to previous tokens in layer {$selectedLayer} -> attention head {$selectedAttentionMapI}
+						to previous tokens in
+						<span class="font-bold">layer {$selectedLayer} </span>
+						->
+						<span class="font-bold">attention head {$selectedAttentionMapI}</span>
 					</span>
 				{:else if $selectedDataView == 'logitAttribution'}
 					<span />
@@ -267,6 +314,14 @@
 		{/await}
 	</Card.Header>
 	<Card.Content class="pb-0">
+		<!-- Start token -->
+		<div class="inline-block pt-2 pl-6 {editorTextClasses}">
+			<span
+				bind:this={startToken}
+				class="text-foreground rounded-sm transition-all hover:shadow-lg hover:shadow-slate-500"
+				>{`<|endoftext|>`}</span
+			>
+		</div>
 		<EditorContent editor={$editor} />
 	</Card.Content>
 	<Card.Footer class="pb-0">

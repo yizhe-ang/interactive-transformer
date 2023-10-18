@@ -6,29 +6,39 @@
 	// TODO: Have an average attention map for each layer?
 
 	import { T, extend, useFrame, useThrelte } from '@threlte/core';
-	import { Text, interactivity, transitions } from '@threlte/extras';
+	import { Text, interactivity, transitions, useCursor } from '@threlte/extras';
 	import * as THREE from 'three';
 	import { Flex, Box } from '@threlte/flex';
 	import { writable } from 'svelte/store';
 	import { getContext, onMount, setContext } from 'svelte';
-	import { attentionMaps, tokenData } from '$lib/stores.js';
+	import { attentionMaps, selectedAttentionMapI } from '$lib/stores.js';
 	import { attentionColorScale } from '$lib/constants.js';
 	import Heatmap from '$components/charts/heatmap.svelte';
+	import colors from 'tailwindcss/colors';
+	import { spring } from 'svelte/motion';
 
 	const cameraControls = getContext('cameraControls');
 
 	const numColumns = 3;
 
-	const clickedI = writable(null);
-	setContext('clickedI', clickedI);
+	// const clickedI = writable(null);
+	// setContext('clickedI', clickedI);
 
-	setContext('selectedData', tokenData);
+	const selectedData = getContext('selectedData');
+
+	const { onPointerEnter, onPointerLeave, hovering } = useCursor();
 
 	onMount(() => {
 		attentionMaps.load().then((data) => {
-			$tokenData = data[0][0].map((d) => attentionColorScale(d));
+			$selectedData = data[0][0].map((d) => attentionColorScale(d));
 		});
 	});
+
+	const textFillOpacities = spring(undefined);
+	$: if ($attentionMaps)
+		$textFillOpacities = Array.from({ length: $attentionMaps.length }, () => 0.3);
+
+	$: console.log($selectedAttentionMapI);
 </script>
 
 <!-- TODO: Use InstancedMesh to be more efficient? -->
@@ -55,11 +65,31 @@
 
 					{@const fontSize = boxWidth * 0.4}
 					<Text
+						on:click={() => {
+							$selectedAttentionMapI = $selectedAttentionMapI == i ? null : i;
+						}}
+						on:pointerenter={() => {
+							textFillOpacities.update((d) => {
+								d[i] = 1;
+								return d;
+							});
+
+							$hovering = true;
+						}}
+						on:pointerleave={() => {
+							textFillOpacities.update((d) => {
+								d[i] = 0.3;
+								return d;
+							});
+
+							$hovering = false;
+						}}
 						text={i}
 						{fontSize}
-						position={[boxWidth / 2, boxWidth / 2, 0]}
-						color="grey"
+						position={[boxWidth / 2, boxWidth / 2, 1]}
+						color={colors.slate['900']}
 						anchorX="right"
+						fillOpacity={$selectedAttentionMapI == i ? 1 : $textFillOpacities[i]}
 					/>
 				</Box>
 			{/each}

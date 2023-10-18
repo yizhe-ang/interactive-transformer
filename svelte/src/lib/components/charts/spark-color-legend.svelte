@@ -11,6 +11,7 @@
 		width={250}
 		marginTop={0}
 		marginBottom={0}
+    ticks={3}
 		classes="absolute top-0 rounded overflow-hidden"
 	/>
 	<slot />

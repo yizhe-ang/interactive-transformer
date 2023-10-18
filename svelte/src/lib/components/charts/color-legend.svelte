@@ -8,7 +8,7 @@
 	import { interpolate, interpolateRound, quantize } from 'd3-interpolate';
 	import { format } from 'd3-format';
 	import { scaleLinear, scaleBand } from 'd3-scale';
-	import { axisBottom } from 'd3-axis';
+	import { axisBottom, axisTop } from 'd3-axis';
 
 	export let color;
 	export let title;
@@ -113,7 +113,7 @@
 				.attr('height', height - marginTop - marginBottom)
 				.attr('preserveAspectRatio', 'none')
 				.attr('xlink:href', ramp(color.interpolator()).toDataURL())
-				.style('clip-path', clipPath ? 'url(#color-legend-mask)' : null);
+				.style('clip-path', "inset(0% round 5px)");
 
 			// scaleSequentialQuantile doesn’t implement ticks or tickFormat.
 			if (!x.ticks) {
@@ -187,6 +187,7 @@
 				.attr('transform', `translate(0,${height - marginBottom})`)
 				.call(
 					axisBottom(x)
+					// axisTop(x)
 						.ticks(ticks, typeof tickFormat === 'string' ? tickFormat : undefined)
 						.tickFormat(typeof tickFormat === 'function' ? tickFormat : undefined)
 						.tickSize(tickSize)
@@ -204,14 +205,17 @@
 						.attr('font-weight', 'bold')
 						.attr('class', 'title')
 						.text(title)
-				);
+				)
+        .lower()
 		}
 	}
 </script>
 
-<div class={classes}>
+<!-- <div class={classes}>
 	<svg bind:this={svgElement} {width} {height} viewBox={[0, 0, width, height]} />
-</div>
+</div> -->
+
+	<svg class={classes} bind:this={svgElement} {width} {height} viewBox={[0, 0, width, height]} />
 
 <style lang="postcss">
 	svg {

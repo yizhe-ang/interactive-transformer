@@ -13,6 +13,8 @@
 	import { getContext } from 'svelte';
 	import { getColumns, opacityTransition } from '$lib/helpers.js';
 	import { RoundedBoxGeometry } from '@threlte/extras';
+  import colors from 'tailwindcss/colors';
+  import { selectedTokenI } from "$lib/stores.js"
 	// import { MeshTransmissionMaterial } from "@pmndrs/vanilla"
 	// import { MeshTransmissionMaterial } from '$lib/TransmissionMaterial.js';
 	// extend({ MeshTransmissionMaterial });
@@ -23,9 +25,14 @@
 	export let direction = 'row';
 
 	const selectedData = getContext('selectedData');
+	const selectedDatum = getContext('selectedDatum');
 
 	const outlinePosition = spring(0);
 	const outlineOpacity = spring(0);
+
+	const markerPosition = spring([0, 0]);
+	const markerOpacity = spring(0);
+	let markerColor = new Color();
 
 	let texture;
 	let width;
@@ -111,7 +118,13 @@
 	// Update shader uniforms
 	$: material.uniforms.uTexture.value = texture;
 
-	let selectedDatumPosition = null;
+	const markerCoords = [
+		[0, 0],
+		[1, 0],
+		[1, 1],
+		[0, 1],
+		[0, 0]
+	];
 </script>
 
 <T.Mesh
@@ -134,14 +147,27 @@
 			$selectedData = data[selectedJ].map((d) => colorScale(d));
 		}
 
-		// selectedDatum = data[selectedJ][selectedI]
-		selectedDatumPosition = [x, y];
+		const d = data[selectedJ][selectedI];
+		$selectedDatum = {
+			value: d,
+			color: colorScale(d),
+			position: [x, y]
+		};
+		$markerPosition = $selectedDatum.position;
+
+		markerColor = markerColor.set($selectedDatum.color);
+
+    // FIXME: Only for attention map
+    // Set selectedToken
+    $selectedTokenI = selectedJ
 	}}
 	on:pointerenter={(e) => {
 		$outlineOpacity = 1;
+		$markerOpacity = 1;
 	}}
 	on:pointerleave={(e) => {
 		$outlineOpacity = 0;
+		$markerOpacity = 0;
 	}}
 >
 	<T.PlaneGeometry args={[width, height]} />
@@ -160,6 +186,16 @@
 	{/each}
 
 	<!-- TODO: Rounded square for selected data point? -->
+	<!-- TODO: Bloom effect? -->
+	<!-- <T.Mesh position={[...$markerPosition, 0]}>
+		<RoundedBoxGeometry args={[1, 1, 0.1]} />
+		<T.MeshStandardMaterial opacity={$markerOpacity} transparent color={markerColor} />
+	</T.Mesh> -->
+
+	<!-- Datum marker -->
+	<!-- <T.Group position={[...$markerPosition, 0]}>
+		<MeshLine points={markerCoords.map((c) => new Vector3(...c, 0))} opacity={$markerOpacity} color={colors.slate['900']} width={0.2} />
+	</T.Group> -->
 
 	<!-- <T.Mesh>
 		<RoundedBoxGeometry args={[width, 1, 0.1]} />

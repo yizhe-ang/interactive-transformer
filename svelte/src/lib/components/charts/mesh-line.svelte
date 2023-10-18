@@ -5,7 +5,7 @@
 
 	export let points;
 	export let width = 0.1;
-	export let color = colors.slate['900'];
+	export let color = colors.slate['500'];
 	export let opacity = 1;
 </script>
 

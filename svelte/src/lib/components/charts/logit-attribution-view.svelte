@@ -3,7 +3,7 @@
 	import { Align, OrbitControls, interactivity, transitions } from '@threlte/extras';
 	import * as THREE from 'three';
 	import { Flex, Box } from '@threlte/flex';
-	import { logitAttributionData, modelConfig, tokenData } from '$lib/stores.js';
+	import { logitAttributionData, modelConfig } from '$lib/stores.js';
 	import Heatmap from '$components/charts/heatmap.svelte';
 	import { getColumns } from '$lib/helpers.js';
 	import { range, extent, max } from 'd3';
@@ -18,11 +18,11 @@
 	$: if (data) dataExtent = max(extent(data.flat()), (d) => Math.abs(d));
 	$: colorScale = logitAttributionColorScale.domain([-dataExtent, 0, dataExtent]);
 
-	setContext('selectedData', tokenData);
+  const selectedData = getContext("selectedData")
 
 	onMount(() => {
 		logitAttributionData.load().then((data) => {
-			$tokenData = getColumns(data, [0])
+			$selectedData = getColumns(data, [0])
 				.flat()
 				.map((d) => colorScale(d));
 		});
