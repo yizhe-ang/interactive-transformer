@@ -13,8 +13,8 @@
 	import { getContext } from 'svelte';
 	import { getColumns, opacityTransition } from '$lib/helpers.js';
 	import { RoundedBoxGeometry } from '@threlte/extras';
-  import colors from 'tailwindcss/colors';
-  import { selectedTokenI } from "$lib/stores.js"
+	import colors from 'tailwindcss/colors';
+	import { selectedTokenI, hoveredHeatmapData } from '$lib/stores.js';
 	// import { MeshTransmissionMaterial } from "@pmndrs/vanilla"
 	// import { MeshTransmissionMaterial } from '$lib/TransmissionMaterial.js';
 	// extend({ MeshTransmissionMaterial });
@@ -157,9 +157,13 @@
 
 		markerColor = markerColor.set($selectedDatum.color);
 
-    // FIXME: Only for attention map
-    // Set selectedToken
-    $selectedTokenI = selectedJ
+		// FIXME: Only for attention map
+		// Set selectedToken
+		$selectedTokenI = selectedJ;
+
+		$hoveredHeatmapData = {
+			i
+		};
 	}}
 	on:pointerenter={(e) => {
 		$outlineOpacity = 1;

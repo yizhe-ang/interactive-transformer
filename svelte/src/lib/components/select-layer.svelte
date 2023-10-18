@@ -13,8 +13,8 @@
 </script>
 
 <Select.Root bind:selected>
-	<Select.Trigger class="pointer-events-auto bg-background w-20">
-		<Select.Value placeholder="Layer" />
+	<Select.Trigger class="pointer-events-auto bg-background w-20 h-30 text-3xl shadow-xl hover:shadow-2xl transition">
+		<Select.Value class="" placeholder="Layer" />
 	</Select.Trigger>
 	<Select.Content>
 		{#await modelConfig.load() then _}

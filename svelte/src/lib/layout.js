@@ -48,7 +48,7 @@ export function colaLayout(graph) {
 	const layout = cola
 		.d3adaptor(d3)
 		.avoidOverlaps(true)
-		.flowLayout('y', 90)
+		.flowLayout('y', 80)
 		// .symmetricDiffLinkLengths(6)
 		.constraints(constraints)
 		.nodes(nodes)

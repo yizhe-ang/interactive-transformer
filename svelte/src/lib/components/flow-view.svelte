@@ -11,15 +11,24 @@
 	} from '@xyflow/svelte';
 	import { transformerGraph } from '$lib/graphs.js';
 	import Node from '$components/node.svelte';
+	import Edge from '$components/edge.svelte';
 	import LayerNode from '$components/layer-node.svelte';
+	import OperationNode from '$components/operation-node.svelte';
 	import { writable } from 'svelte/store';
 	import { colaLayout } from '$lib/layout.js';
+  import { flowView } from "$lib/stores.js"
 
 	const svelteFlow = useSvelteFlow();
+  $flowView = svelteFlow
 
 	const nodeTypes = {
 		node: Node,
-    layerNode: LayerNode
+		layerNode: LayerNode,
+		operationNode: OperationNode
+	};
+
+	const edgeTypes = {
+		edge: Edge
 	};
 
 	const nodes = writable(transformerGraph.nodes);
@@ -49,8 +58,7 @@
 
 			$nodes = $nodes;
 
-			// FIXME:
-			svelteFlow.fitView($nodes);
+			svelteFlow.fitView();
 		});
 
 		layout.on('end', () => {
@@ -63,18 +71,19 @@
 					type: 'layerNode',
 					draggable: false,
 					selectable: false,
-					position: { x: g.bounds.x - padding, y: g.bounds.y - padding },
+					// position: { x: g.bounds.x - padding, y: g.bounds.y - padding },
+					position: { x: g.bounds.x - padding / 4, y: g.bounds.y - padding },
 					data: { label: `layer` },
-					style: `width: ${g.bounds.width() + padding * 2}px; height: ${
+					style: `width: ${g.bounds.width() + padding}px; height: ${
 						g.bounds.height() + padding * 2
-					}px; pointer-events: none;`,
+					}px; pointer-events: none;`
 				};
 
 				// $nodes.push(node);
 				$nodes.unshift(node);
 			});
 
-			svelteFlow.fitView($nodes);
+			svelteFlow.fitView();
 		});
 	}
 </script>
@@ -83,10 +92,10 @@
 	{nodes}
 	{edges}
 	{nodeTypes}
+	{edgeTypes}
 	fitView
-	on:nodeclick={(event) => console.log(event.detail.node)}
 >
-	<Controls />
+	<!-- <Controls /> -->
 	<Background variant={BackgroundVariant.Dots} />
 	<!-- <MiniMap /> -->
 </SvelteFlow>

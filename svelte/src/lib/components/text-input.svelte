@@ -20,7 +20,8 @@
 		selectedAttentionMap,
 		tokenData,
 		selectedDataView,
-		selectedAttentionRow
+		selectedAttentionRow,
+		hoveredHeatmapData
 	} from '$lib/stores.js';
 	import { Decoration, DecorationSet } from '@tiptap/pm/view';
 	import { isDarkColor } from '$lib/helpers.js';
@@ -216,7 +217,7 @@
 			],
 			editorProps: {
 				attributes: {
-					class: 'w-[65ch] p-2 max-h-32 overflow-auto' + ' ' + editorTextClasses,
+					class: 'outline-slate-300 w-[65ch] p-2 max-h-32 overflow-auto' + ' ' + editorTextClasses,
 					style: 'transition: max-height 1s ease-in-out; scrollbar-gutter: stable both-edges;'
 				}
 			},
@@ -305,7 +306,11 @@
 						to previous tokens in
 						<span class="font-bold">layer {$selectedLayer} </span>
 						->
-						<span class="font-bold">attention head {$selectedAttentionMapI}</span>
+						{#if $selectedAttentionMapI || $hoveredHeatmapData}
+							<span class="font-bold"
+								>attention head {$selectedAttentionMapI || $hoveredHeatmapData.i}</span
+							>
+						{/if}
 					</span>
 				{:else if $selectedDataView == 'logitAttribution'}
 					<span />

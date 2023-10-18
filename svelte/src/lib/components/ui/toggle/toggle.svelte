@@ -12,13 +12,14 @@
 	let className: $$Props["class"] = undefined;
 	export let variant: $$Props["variant"] = "default";
 	export let size: $$Props["size"] = "default";
+	export let shadow: $$Props["shadow"] = "default";
 	export let pressed: $$Props["pressed"] = undefined;
 	export { className as class };
 </script>
 
 <TogglePrimitive.Root
 	bind:pressed
-	class={cn(toggleVariants({ variant, size, className }))}
+	class={cn(toggleVariants({ variant, size, shadow, className }))}
 	{...$$restProps}
 	on:click
 >

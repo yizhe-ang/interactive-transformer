@@ -8,7 +8,7 @@
 	import { T, extend, useFrame, useThrelte } from '@threlte/core';
 	import { Text, interactivity, transitions, useCursor } from '@threlte/extras';
 	import * as THREE from 'three';
-	import { Flex, Box } from '@threlte/flex';
+	import { Flex, Box, useReflow } from '@threlte/flex';
 	import { writable } from 'svelte/store';
 	import { getContext, onMount, setContext } from 'svelte';
 	import { attentionMaps, selectedAttentionMapI } from '$lib/stores.js';
@@ -37,8 +37,6 @@
 	const textFillOpacities = spring(undefined);
 	$: if ($attentionMaps)
 		$textFillOpacities = Array.from({ length: $attentionMaps.length }, () => 0.3);
-
-	$: console.log($selectedAttentionMapI);
 </script>
 
 <!-- TODO: Use InstancedMesh to be more efficient? -->
@@ -51,16 +49,25 @@
 			flexWrap="Wrap"
 			{gap}
 			on:reflow={({ width, height }) => {
-				$cameraControls.fitToBox(ref, false, {
-					paddingTop: gap,
+				// $cameraControls.fitToBox(ref, false, {
+				// 	paddingTop: gap,
+				// 	paddingRight: gap,
+				// 	paddingBottom: gap,
+				// 	paddingLeft: gap
+				// });
+				$cameraControls.fitToBox(new THREE.Box3(
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, -height, 0),
+        ), false, {
+					paddingTop: gap * 2.5,
+					paddingBottom: gap * 2.5,
 					paddingRight: gap,
-					paddingBottom: gap,
 					paddingLeft: gap
 				});
 			}}
 		>
 			{#each $attentionMaps as data, i}
-				<Box>
+				<Box width={boxWidth}>
 					<Heatmap {data} {i} colorScale={attentionColorScale} renderZero={false} />
 
 					{@const fontSize = boxWidth * 0.4}

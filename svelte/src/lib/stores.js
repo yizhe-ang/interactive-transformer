@@ -6,8 +6,14 @@ import {
 	asyncWritable
 } from '@square/svelte-store';
 import { getColumns } from './helpers';
+import { spring } from 'svelte/motion';
 
-export const selectedDataView = writable('attention');
+export const flowView = writable(undefined)
+
+export const dataViewSize = spring(0);
+
+export const selectedDataView = writable(undefined);
+// export const selectedDataView = writable('attention');
 // export const selectedDataView = writable('logitAttribution');
 
 export const inputText = writable(
@@ -25,6 +31,8 @@ export const selectedLayer = writable(0);
 export const selectedAttentionMapI = writable(null);
 
 export const selectedTokenI = writable(0);
+
+export const hoveredHeatmapData = writable(undefined);
 
 // export const numLayers = asyncReadable(undefined, async () => {
 // 	const response = await fetch(`http://localhost:8000/num_layers`);

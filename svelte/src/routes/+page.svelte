@@ -4,7 +4,7 @@
 	import TextInput from '$components/text-input.svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
-	import { tokenData } from '$lib/stores.js';
+	import { tokenData, dataViewSize, selectedDataView, flowView } from '$lib/stores.js';
 	import { fly } from 'svelte/transition';
 
 	// async function test() {
@@ -32,13 +32,19 @@
 		{/if}
 	</Pane>
 
-	<Pane size={50}>
-		<DataView />
-	</Pane>
+	{#if $selectedDataView}
+		<!-- <Pane bind:size={$dataViewSize}> -->
+		<Pane size={50}>
+			<DataView />
+		</Pane>
+	{/if}
 </Splitpanes>
 
-<div class="fixed left-0 right-0 grid place-content-center pointer-events-none">
-	{#if $tokenData}
+{#if $tokenData}
+	<div
+		transition:fly={{ y: -200, duration: 200 }}
+		class="fixed left-0 right-0 grid place-content-center pointer-events-none"
+	>
 		<TextInput />
-	{/if}
-</div>
+	</div>
+{/if}

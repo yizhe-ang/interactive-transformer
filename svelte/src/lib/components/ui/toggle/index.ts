@@ -13,11 +13,17 @@ export const toggleVariants = tv({
 			default: "h-10 px-3",
 			sm: "h-9 px-2.5",
 			lg: "h-11 px-5"
-		}
+		},
+    shadow: {
+      default: "",
+      parameters: "shadow-violet-300 hover:shadow-violet-300 data-[state=on]:shadow-violet-300",
+      activations: "shadow-amber-100 hover:shadow-amber-100 data-[state=on]:shadow-amber-100"
+    }
 	},
 	defaultVariants: {
 		variant: "default",
-		size: "default"
+		size: "default",
+		shadow: "default"
 	}
 });
 

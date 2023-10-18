@@ -47,8 +47,8 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 const defaultEdgeOptions = {
 	markerEnd: {
 		type: 'arrowclosed'
-	},
-  zIndex: 1
+	}
+	// zIndex: 1
 };
 
 function genEdge(sourceNode, targetNode, options) {
@@ -56,7 +56,9 @@ function genEdge(sourceNode, targetNode, options) {
 		...options,
 		id: `${sourceNode.id}-${targetNode.id}`,
 		source: sourceNode.id,
-		target: targetNode.id
+		target: targetNode.id,
+		type: 'edge',
+    style: "stroke-width: 1.5px;"
 	};
 }
 
@@ -74,7 +76,7 @@ const inputNode = {
 const embeddingNode = {
 	...defaultNodeOptions,
 	id: 'embedding',
-	data: { label: 'embedding', shape: ['seq', 'd_model'], type: 'activations' }
+	data: { label: 'embedding', shape: ['seq', 'd_model'], type: 'parameters' }
 };
 
 const inputNodes = [inputNode, embeddingNode];
@@ -90,8 +92,26 @@ const residualPreNode = {
 const residualPostNode = {
 	...defaultNodeOptions,
 	id: 'residualPost',
-	data: { label: 'residual post', shape: ['seq', 'd_model'], type: 'activations' }
+	data: { label: 'residual', shape: ['seq', 'd_model'], type: 'activations' }
 };
+
+const unembeddingNode = {
+	...defaultNodeOptions,
+	id: 'unembedding',
+	data: { label: 'unembedding', shape: ['d_model', 'n_tokens'], type: 'parameters' }
+};
+
+const logitsNode = {
+	...defaultNodeOptions,
+	id: 'logits',
+	data: { label: 'logits', shape: ['seq', 'n_tokens'], type: 'activations' }
+};
+
+const outputNodes = [unembeddingNode, logitsNode];
+const outputEdges = [
+	genEdge(residualPostNode, unembeddingNode, { ...defaultEdgeOptions, data: { label: '@' } }),
+	genEdge(unembeddingNode, logitsNode, { ...defaultEdgeOptions })
+];
 
 // Attention head
 
@@ -152,7 +172,8 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 	const qKNode = {
 		...defaultNodeOptions,
 		id: `q~k_${id}`,
-		data: { label: 'q~k', type: 'operation' },
+		type: 'operationNode',
+		data: { label: 'dot product', type: 'operation' },
 		position: { x: (qNode.position.x + kNode.position.x) / 2, y: qNode.position.y + yUnit }
 	};
 	const attentionScoresNode = {
@@ -170,7 +191,8 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 	const vAttentionPatternNode = {
 		...defaultNodeOptions,
 		id: `v~attentionPattern_${id}`,
-		data: { label: 'v~attention pattern', type: 'operation' },
+		type: 'operationNode',
+		data: { label: 'weighted avg', type: 'operation' },
 		position: { x: wqNode.position.x, y: attentionPatternNode.position.y + yUnit }
 	};
 	const zNode = {
@@ -203,14 +225,15 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 	};
 	const residualPreAddAttentionOutNode = {
 		...defaultNodeOptions,
+		type: 'operationNode',
 		id: `residualPre+attentionOut_${id}`,
 		data: { label: '+', type: 'operation' }
 	};
 
 	const edges = [
-		genEdge(inputNode, wvNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(inputNode, wqNode, { ...defaultEdgeOptions, label: '@' }),
-		genEdge(inputNode, wkNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(inputNode, wvNode, { ...defaultEdgeOptions, data: { label: '@' } }),
+		genEdge(inputNode, wqNode, { ...defaultEdgeOptions, data: { label: '@' } }),
+		genEdge(inputNode, wkNode, { ...defaultEdgeOptions, data: { label: '@' } }),
 		genEdge(wvNode, vNode, { ...defaultEdgeOptions }),
 		genEdge(wqNode, qNode, { ...defaultEdgeOptions }),
 		genEdge(wkNode, kNode, { ...defaultEdgeOptions }),
@@ -219,17 +242,24 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 		genEdge(qKNode, attentionScoresNode, { ...defaultEdgeOptions }),
 		genEdge(attentionScoresNode, attentionPatternNode, {
 			...defaultEdgeOptions,
-			label: 'softmax'
+			data: {
+				label: 'softmax'
+			}
 		}),
 		genEdge(vNode, vAttentionPatternNode, { ...defaultEdgeOptions }),
 		genEdge(attentionPatternNode, vAttentionPatternNode, { ...defaultEdgeOptions }),
 		genEdge(vAttentionPatternNode, zNode, { ...defaultEdgeOptions }),
-		genEdge(zNode, woNode, { ...defaultEdgeOptions, label: '@' }),
+		genEdge(zNode, woNode, { ...defaultEdgeOptions, data: { label: '@' } }),
 		genEdge(woNode, resultNode, { ...defaultEdgeOptions }),
 		// genEdge(resultNode, sumHeadsNode, { ...defaultEdgeOptions })
-		genEdge(resultNode, attentionOutNode, { ...defaultEdgeOptions }),
+		genEdge(resultNode, attentionOutNode, {
+			...defaultEdgeOptions,
+			data: { label: 'sum over heads' }
+		}),
 		genEdge(inputNode, residualPreAddAttentionOutNode, { ...defaultEdgeOptions }),
-		genEdge(attentionOutNode, residualPreAddAttentionOutNode, { ...defaultEdgeOptions }),
+		genEdge(attentionOutNode, residualPreAddAttentionOutNode, {
+			...defaultEdgeOptions
+		}),
 		genEdge(residualPreAddAttentionOutNode, outputNode, { ...defaultEdgeOptions })
 	];
 
@@ -362,14 +392,14 @@ function genAttentionHeadGraph(id, inputNode, outputNode) {
 			axis: 'x',
 			left: inputNode.id,
 			right: wvNode.id,
-			gap: 100
+			gap: 150
 		},
 		{
 			axis: 'y',
 			left: inputNode.id,
 			right: wqNode.id,
 			gap: 150
-		},
+		}
 	];
 
 	return { nodes, edges, constraints, groups };
@@ -392,8 +422,8 @@ const {
 // );
 
 export const transformerGraph = {
-	nodes: [...inputNodes, residualPostNode, ...attentionHeadNodes],
-	edges: [...inputEdges, ...attentionHeadEdges],
+	nodes: [...inputNodes, ...outputNodes, residualPostNode, ...attentionHeadNodes],
+	edges: [...inputEdges, ...outputEdges, ...attentionHeadEdges],
 	groups: attentionGroups,
 	constraints: [
 		{
@@ -401,7 +431,9 @@ export const transformerGraph = {
 			axis: 'x',
 			offsets: [
 				{ node: inputNode.id, offset: 0 },
-				{ node: embeddingNode.id, offset: 0 }
+				{ node: embeddingNode.id, offset: 0 },
+				{ node: unembeddingNode.id, offset: 0 },
+				{ node: logitsNode.id, offset: 0 }
 			]
 		},
 		...attentionConstraints
