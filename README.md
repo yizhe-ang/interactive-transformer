@@ -23,6 +23,13 @@ Install Python environment
 poetry install
 ```
 
+For non-CUDA CPU version, additionally run:
+
+```bash
+poetry source add -p explicit pytorch https://download.pytorch.org/whl/cpu
+poetry add --source pytorch torch torchvision
+```
+
 Launch the backend server
 
 ```bash
