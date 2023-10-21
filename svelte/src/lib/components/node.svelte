@@ -5,11 +5,11 @@
 	import { Toggle } from '$ui/toggle';
   import { selectedDataView } from "$lib/stores.js"
 
-	export let data;
+	export let edata;
 
   // const toggleClasses = `toggle shadow-md hover:shadow-xl transition cursor-pointer h-auto w-auto p-0 shadow-${shadowColor[data.type]} hover:shadow-${shadowColor[data.type]} data-[state=on]:shadow-xl data-[state=on]:shadow-${shadowColor[data.type]}`
   const toggleClasses = `toggle shadow-md hover:shadow-xl transition cursor-pointer h-auto w-auto p-0 data-[state=on]:shadow-xl`
-</script>
+</script>e
 
 <Handle type="target" position={Position.Top} />
 <Handle type="source" position={Position.Bottom} />
