@@ -9,7 +9,7 @@
 
   // const toggleClasses = `toggle shadow-md hover:shadow-xl transition cursor-pointer h-auto w-auto p-0 shadow-${shadowColor[data.type]} hover:shadow-${shadowColor[data.type]} data-[state=on]:shadow-xl data-[state=on]:shadow-${shadowColor[data.type]}`
   const toggleClasses = `toggle shadow-md hover:shadow-xl transition cursor-pointer h-auto w-auto p-0 data-[state=on]:shadow-xl`
-</script>e
+</script>
 
 <Handle type="target" position={Position.Top} />
 <Handle type="source" position={Position.Bottom} />
